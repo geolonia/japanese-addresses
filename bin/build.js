@@ -12,19 +12,116 @@ const cliProgress = require('cli-progress')
 const dataDir = path.join(path.dirname(path.dirname(__filename)), 'data')
 
 const isj2Postal = {
-  "東津軽郡外ケ浜町":"東津軽郡外ヶ浜町",
-  "龍ヶ崎市":"龍ケ崎市",
-  "鎌ヶ谷市":"鎌ケ谷市",
-  "袖ヶ浦市":"袖ケ浦市",
-  "三宅村":"三宅島三宅村",
-  "八丈町":"八丈島八丈町",
-  "犬上郡大字多賀町":"犬上郡多賀町",
-  "篠山市":"丹波篠山市",
-  "筑紫郡那珂川町":"那珂川市",
-  "糟屋郡須恵町":"糟屋郡須惠町",
+  東津軽郡外ケ浜町: '東津軽郡外ヶ浜町',
+  龍ヶ崎市: '龍ケ崎市',
+  鎌ヶ谷市: '鎌ケ谷市',
+  袖ヶ浦市: '袖ケ浦市',
+  三宅村: '三宅島三宅村',
+  八丈町: '八丈島八丈町',
+  犬上郡大字多賀町: '犬上郡多賀町',
+  篠山市: '丹波篠山市',
+  筑紫郡那珂川町: '那珂川市',
+  糟屋郡須恵町: '糟屋郡須惠町',
 }
 
-const normalize = text => {
+const han2zenMap = {
+  ｶﾞ: 'ガ',
+  ｷﾞ: 'ギ',
+  ｸﾞ: 'グ',
+  ｹﾞ: 'ゲ',
+  ｺﾞ: 'ゴ',
+  ｻﾞ: 'ザ',
+  ｼﾞ: 'ジ',
+  ｽﾞ: 'ズ',
+  ｾﾞ: 'ゼ',
+  ｿﾞ: 'ゾ',
+  ﾀﾞ: 'ダ',
+  ﾁﾞ: 'ヂ',
+  ﾂﾞ: 'ヅ',
+  ﾃﾞ: 'デ',
+  ﾄﾞ: 'ド',
+  ﾊﾞ: 'バ',
+  ﾋﾞ: 'ビ',
+  ﾌﾞ: 'ブ',
+  ﾍﾞ: 'ベ',
+  ﾎﾞ: 'ボ',
+  ﾊﾟ: 'パ',
+  ﾋﾟ: 'ピ',
+  ﾌﾟ: 'プ',
+  ﾍﾟ: 'ペ',
+  ﾎﾟ: 'ポ',
+  ｳﾞ: 'ヴ',
+  ﾜﾞ: 'ヷ',
+  ｦﾞ: 'ヺ',
+  ｱ: 'ア',
+  ｲ: 'イ',
+  ｳ: 'ウ',
+  ｴ: 'エ',
+  ｵ: 'オ',
+  ｶ: 'カ',
+  ｷ: 'キ',
+  ｸ: 'ク',
+  ｹ: 'ケ',
+  ｺ: 'コ',
+  ｻ: 'サ',
+  ｼ: 'シ',
+  ｽ: 'ス',
+  ｾ: 'セ',
+  ｿ: 'ソ',
+  ﾀ: 'タ',
+  ﾁ: 'チ',
+  ﾂ: 'ツ',
+  ﾃ: 'テ',
+  ﾄ: 'ト',
+  ﾅ: 'ナ',
+  ﾆ: 'ニ',
+  ﾇ: 'ヌ',
+  ﾈ: 'ネ',
+  ﾉ: 'ノ',
+  ﾊ: 'ハ',
+  ﾋ: 'ヒ',
+  ﾌ: 'フ',
+  ﾍ: 'ヘ',
+  ﾎ: 'ホ',
+  ﾏ: 'マ',
+  ﾐ: 'ミ',
+  ﾑ: 'ム',
+  ﾒ: 'メ',
+  ﾓ: 'モ',
+  ﾔ: 'ヤ',
+  ﾕ: 'ユ',
+  ﾖ: 'ヨ',
+  ﾗ: 'ラ',
+  ﾘ: 'リ',
+  ﾙ: 'ル',
+  ﾚ: 'レ',
+  ﾛ: 'ロ',
+  ﾜ: 'ワ',
+  ｦ: 'ヲ',
+  ﾝ: 'ン',
+  ｧ: 'ァ',
+  ｨ: 'ィ',
+  ｩ: 'ゥ',
+  ｪ: 'ェ',
+  ｫ: 'ォ',
+  ｯ: 'ッ',
+  ｬ: 'ャ',
+  ｭ: 'ュ',
+  ｮ: 'ョ',
+  '｡': '。',
+  '､': '、',
+  ｰ: 'ー',
+  '｢': '「',
+  '｣': '」',
+  '･': '・',
+}
+const han2zen = str => {
+  let reg = new RegExp('(' + Object.keys(han2zenMap).join('|') + ')', 'g')
+  return str
+    .replace(reg, match => han2zenMap[match])
+}
+
+const normalizePostalValue = text => {
   // return text
   return text.replace('　', '').trim()
 }
@@ -70,7 +167,7 @@ const downloadPostalCodeKana = () => {
                     ],
                   }).map(item => ({
                     ...item,
-                    市区町村名: normalize(item['市区町村名']),
+                    市区町村名: normalizePostalValue(item['市区町村名']),
                   }))
                   resolve(json)
                 }
@@ -116,7 +213,7 @@ const downloadPostalCodeRome = () => {
                     ],
                   }).map(item => ({
                     ...item,
-                    市区町村名: normalize(item['市区町村名']),
+                    市区町村名: normalizePostalValue(item['市区町村名']),
                   }))
                   resolve(json)
                 }
@@ -135,7 +232,6 @@ const getAddressItems = (
   postalCodeRomeItems,
 ) => {
   return new Promise(resolve => {
-    const now = Date.now()
     const records = []
     const url = `https://nlftp.mlit.go.jp/isj/dls/data/11.0b/${prefCode}000-11.0b.zip`
 
@@ -177,12 +273,14 @@ const getAddressItems = (
                 const postalCodeKanaItem = postalCodeKanaItems.find(
                   item =>
                     item['都道府県名'] === line['都道府県名'] &&
-                    (item['市区町村名'] === line['市区町村名'] || item['市区町村名'] === isj2Postal[line['市区町村名']]),
+                    (item['市区町村名'] === line['市区町村名'] ||
+                      item['市区町村名'] === isj2Postal[line['市区町村名']]),
                 )
                 const postalCodeRomeItem = postalCodeRomeItems.find(
                   item =>
                     item['都道府県名'] === line['都道府県名'] &&
-                    (item['市区町村名'] === line['市区町村名'] || item['市区町村名'] === isj2Postal[line['市区町村名']]),
+                    (item['市区町村名'] === line['市区町村名'] ||
+                      item['市区町村名'] === isj2Postal[line['市区町村名']]),
                 )
 
                 if (postalCodeKanaItem && postalCodeRomeItem) {
@@ -203,10 +301,10 @@ const getAddressItems = (
                   line['緯度'],
                   line['経度'],
                   postalCodeKanaItem
-                    ? postalCodeKanaItem['都道府県名カナ']
+                    ? han2zen(postalCodeKanaItem['都道府県名カナ'])
                     : '',
                   postalCodeKanaItem
-                    ? postalCodeKanaItem['市区町村名カナ']
+                    ? han2zen(postalCodeKanaItem['市区町村名カナ'])
                     : '',
                   postalCodeRomeItem
                     ? postalCodeRomeItem['都道府県名ローマ字']
@@ -214,7 +312,6 @@ const getAddressItems = (
                   postalCodeRomeItem
                     ? postalCodeRomeItem['市区町村名ローマ字']
                     : '',
-                  now,
                 ]
                   .map(item =>
                     item && typeof item === 'string' ? `"${item}"` : item,
@@ -235,7 +332,6 @@ const getAddressItems = (
 }
 
 const main = async () => {
-
   process.stderr.write('郵便番号辞書のダウンロード中...')
   const postalCodeKanaItems = await downloadPostalCodeKana()
   const postalCodeRomeItems = await downloadPostalCodeRome()
@@ -255,7 +351,6 @@ const main = async () => {
       '"市区町村名カナ"',
       '"都道府県名ローマ字"',
       '"市区町村名ローマ字"',
-      '"timestamp"',
     ].join(','),
   ]
 
