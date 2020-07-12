@@ -11,6 +11,19 @@ const cliProgress = require('cli-progress')
 
 const dataDir = path.join(path.dirname(path.dirname(__filename)), 'data')
 
+const isj2Postal = {
+  "東津軽郡外ケ浜町":"東津軽郡外ヶ浜町",
+  "龍ヶ崎市":"龍ケ崎市",
+  "鎌ヶ谷市":"鎌ケ谷市",
+  "袖ヶ浦市":"袖ケ浦市",
+  "三宅村":"三宅島三宅村",
+  "八丈町":"八丈島八丈町",
+  "犬上郡大字多賀町":"犬上郡多賀町",
+  "篠山市":"丹波篠山市",
+  "筑紫郡那珂川町":"那珂川市",
+  "糟屋郡須恵町":"糟屋郡須惠町",
+}
+
 const normalize = text => {
   // return text
   return text.replace('　', '').trim()
@@ -164,12 +177,12 @@ const getAddressItems = (
                 const postalCodeKanaItem = postalCodeKanaItems.find(
                   item =>
                     item['都道府県名'] === line['都道府県名'] &&
-                    item['市区町村名'] === line['市区町村名'],
+                    (item['市区町村名'] === line['市区町村名'] || item['市区町村名'] === isj2Postal[line['市区町村名']]),
                 )
                 const postalCodeRomeItem = postalCodeRomeItems.find(
                   item =>
                     item['都道府県名'] === line['都道府県名'] &&
-                    item['市区町村名'] === line['市区町村名'],
+                    (item['市区町村名'] === line['市区町村名'] || item['市区町村名'] === isj2Postal[line['市区町村名']]),
                 )
 
                 if (postalCodeKanaItem && postalCodeRomeItem) {
