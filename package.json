@@ -1,0 +1,20 @@
+{
+  "name": "isj-postal-matcher",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./bin/build.js",
+  "scripts": {
+    "build": "node bin/build.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^5.3.0",
+    "unzipper": "^0.10.11"
+  },
+  "dependencies": {
+    "cli-progress": "^3.8.2",
+    "csv-parse": "^4.10.1",
+    "encoding-japanese": "^1.0.30"
+  }
+}

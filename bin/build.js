@@ -1,0 +1,285 @@
+#!/usr/bin/env node
+
+const fs = require('fs')
+const path = require('path')
+const https = require('https')
+
+const unzip = require('unzipper')
+const Encoding = require('encoding-japanese')
+const csvParse = require('csv-parse/lib/sync')
+const cliProgress = require('cli-progress')
+
+const dataDir = path.join(path.dirname(path.dirname(__filename)), 'data')
+
+const normalize = text => {
+  // return text
+  return text.replace('　', '').trim()
+}
+
+const downloadPostalCodeKana = () => {
+  return new Promise((resolve, reject) => {
+    const url =
+      'https://www.post.japanpost.jp/zipcode/dl/kogaki/zip/ken_all.zip'
+    const csvPath = `${dataDir}/postalcode.csv`
+    https.get(url, res => {
+      res
+        .pipe(unzip.Parse())
+        .on('entry', entry => {
+          entry
+            .pipe(fs.createWriteStream(csvPath))
+            .on('finish', () => {
+              fs.readFile(csvPath, (error, buffer) => {
+                if (error) {
+                  reject(error)
+                } else {
+                  const text = Encoding.convert(buffer, {
+                    from: 'SJIS',
+                    to: 'UNICODE',
+                    type: 'string',
+                  })
+                  const json = csvParse(text, {
+                    columns: [
+                      '全国地方公共団体コード',
+                      '（旧）郵便番号',
+                      '郵便番号',
+                      '都道府県名カナ',
+                      '市区町村名カナ',
+                      '町域名カナ',
+                      '都道府県名',
+                      '市区町村名',
+                      '町域名',
+                      'hasMulti',
+                      'hasBanchiOnAza',
+                      'hasChomome',
+                      'hasAlias',
+                      'update',
+                      'updateReason',
+                    ],
+                  }).map(item => ({
+                    ...item,
+                    市区町村名: normalize(item['市区町村名']),
+                  }))
+                  resolve(json)
+                }
+              })
+            })
+            .on('error', error => reject(error))
+        })
+        .on('error', error => reject(error))
+    })
+  })
+}
+
+const downloadPostalCodeRome = () => {
+  return new Promise((resolve, reject) => {
+    const url =
+      'https://www.post.japanpost.jp/zipcode/dl/roman/ken_all_rome.zip'
+    const csvPath = `${dataDir}/postalcode.csv`
+    https.get(url, res => {
+      res
+        .pipe(unzip.Parse())
+        .on('entry', entry => {
+          entry
+            .pipe(fs.createWriteStream(csvPath))
+            .on('finish', () => {
+              fs.readFile(csvPath, (error, buffer) => {
+                if (error) {
+                  reject(error)
+                } else {
+                  const text = Encoding.convert(buffer, {
+                    from: 'SJIS',
+                    to: 'UNICODE',
+                    type: 'string',
+                  })
+                  const json = csvParse(text, {
+                    columns: [
+                      '郵便番号',
+                      '都道府県名',
+                      '市区町村名',
+                      '町域名',
+                      '都道府県名ローマ字',
+                      '市区町村名ローマ字',
+                      '町域名ローマ字',
+                    ],
+                  }).map(item => ({
+                    ...item,
+                    市区町村名: normalize(item['市区町村名']),
+                  }))
+                  resolve(json)
+                }
+              })
+            })
+            .on('error', error => reject(error))
+        })
+        .on('error', error => reject(error))
+    })
+  })
+}
+
+const getAddressItems = (
+  prefCode,
+  postalCodeKanaItems,
+  postalCodeRomeItems,
+) => {
+  return new Promise(resolve => {
+    const now = Date.now()
+    const records = []
+    const url = `https://nlftp.mlit.go.jp/isj/dls/data/11.0b/${prefCode}000-11.0b.zip`
+
+    https.get(url, res => {
+      res.pipe(unzip.Parse()).on('entry', entry => {
+        const entryPath = path.join(dataDir, entry.path)
+        if (entry.type === 'Directory') {
+          try {
+            fs.mkdirSync(entryPath)
+          } catch (error) {
+            // already exists
+          }
+        } else if (entry.path.slice(-4) === '.csv') {
+          entry.pipe(
+            fs.createWriteStream(entryPath).on('finish', () => {
+              const buffer = fs.readFileSync(entryPath)
+              const text = Encoding.convert(buffer, {
+                from: 'SJIS',
+                to: 'UNICODE',
+                type: 'string',
+              })
+
+              const data = csvParse(text, {
+                columns: true,
+                skip_empty_lines: true,
+              })
+
+              let hit = 0
+              let half = 0
+              let nohit = 0
+              const nohitCases = {}
+
+              const bar = new cliProgress.SingleBar()
+              bar.start(data.length, 0)
+
+              data.forEach((line, index) => {
+                bar.update(index + 1)
+
+                const postalCodeKanaItem = postalCodeKanaItems.find(
+                  item =>
+                    item['都道府県名'] === line['都道府県名'] &&
+                    item['市区町村名'] === line['市区町村名'],
+                )
+                const postalCodeRomeItem = postalCodeRomeItems.find(
+                  item =>
+                    item['都道府県名'] === line['都道府県名'] &&
+                    item['市区町村名'] === line['市区町村名'],
+                )
+
+                if (postalCodeKanaItem && postalCodeRomeItem) {
+                  hit++
+                } else if (postalCodeKanaItem || postalCodeRomeItem) {
+                  half++
+                } else {
+                  nohit++
+                  nohitCases[line['都道府県名'] + line['市区町村名']] = true
+                }
+                const record = [
+                  line['都道府県コード'],
+                  line['都道府県名'],
+                  line['市区町村コード'],
+                  line['市区町村名'],
+                  line['大字町丁目コード'],
+                  line['大字町丁目名'],
+                  line['緯度'],
+                  line['経度'],
+                  postalCodeKanaItem
+                    ? postalCodeKanaItem['都道府県名カナ']
+                    : '',
+                  postalCodeKanaItem
+                    ? postalCodeKanaItem['市区町村名カナ']
+                    : '',
+                  postalCodeRomeItem
+                    ? postalCodeRomeItem['都道府県名ローマ字']
+                    : '',
+                  postalCodeRomeItem
+                    ? postalCodeRomeItem['市区町村名ローマ字']
+                    : '',
+                  now,
+                ]
+                  .map(item =>
+                    item && typeof item === 'string' ? `"${item}"` : item,
+                  )
+                  .join(',')
+
+                records.push(record)
+              }) // line iteration
+              bar.stop()
+              const summary = { prefCode, hit, half, nohit, nohitCases }
+              resolve({ records, summary })
+            }),
+          )
+        }
+      }) // http.get response pipe event
+    }) // http.get callback
+  })
+}
+
+const main = async () => {
+
+  process.stderr.write('郵便番号辞書のダウンロード中...')
+  const postalCodeKanaItems = await downloadPostalCodeKana()
+  const postalCodeRomeItems = await downloadPostalCodeRome()
+  process.stderr.write('done\n')
+
+  const finalOutput = [
+    [
+      '"都道府県コード"',
+      '"都道府県名"',
+      '"市区町村コード"',
+      '"市区町村名"',
+      '"大字町丁目コード"',
+      '"大字町丁目名"',
+      '"緯度"',
+      '"経度"',
+      '"都道府県名カナ"',
+      '"市区町村名カナ"',
+      '"都道府県名ローマ字"',
+      '"市区町村名ローマ字"',
+      '"timestamp"',
+    ].join(','),
+  ]
+
+  const promises = []
+  for (let i = 1; i < 48; i++) {
+    let prefCode = i.toString()
+    if (i < 10) {
+      prefCode = `0${prefCode}`
+    }
+    // process.stderr.write(`memoryUsed: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB\n`)
+
+    const promise = getAddressItems(
+      prefCode,
+      postalCodeKanaItems,
+      postalCodeRomeItems,
+    ).then(data => {
+      finalOutput.push(...data.records)
+      process.stderr.write(JSON.stringify({ summary: data.summary }) + '\n')
+    })
+
+    if (process.env.CONCURRENCY === 'true') {
+      promises.push(promise)
+    } else {
+      await promise
+    }
+  } // pref loop
+
+  if (process.env.CONCURRENCY === 'true') {
+    await Promise.all(promises)
+  }
+  fs.writeFileSync(path.join(dataDir, 'final.csv'), finalOutput.join('\n'))
+}
+
+try {
+  fs.mkdirSync(dataDir)
+} catch (error) {
+  // already exists
+}
+
+main()
