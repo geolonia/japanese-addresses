@@ -260,7 +260,6 @@ const getAddressItems = (
               })
 
               let hit = 0
-              let half = 0
               let nohit = 0
               const nohitCases = {}
 
@@ -285,8 +284,6 @@ const getAddressItems = (
 
                 if (postalCodeKanaItem && postalCodeRomeItem) {
                   hit++
-                } else if (postalCodeKanaItem || postalCodeRomeItem) {
-                  half++
                 } else {
                   nohit++
                   nohitCases[line['都道府県名'] + line['市区町村名']] = true
@@ -321,7 +318,7 @@ const getAddressItems = (
                 records.push(record)
               }) // line iteration
               bar.stop()
-              const summary = { prefCode, hit, half, nohit, nohitCases }
+              const summary = { prefCode, hit, nohit, nohitCases: Object.keys(nohitCases) }
               resolve({ records, summary })
             }),
           )
