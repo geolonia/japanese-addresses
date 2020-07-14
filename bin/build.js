@@ -291,24 +291,24 @@ const getAddressItems = (
                 const record = [
                   line['都道府県コード'],
                   line['都道府県名'],
-                  line['市区町村コード'],
-                  line['市区町村名'],
-                  line['大字町丁目コード'],
-                  line['大字町丁目名'],
-                  line['緯度'],
-                  line['経度'],
                   postalCodeKanaItem
                     ? han2zen(postalCodeKanaItem['都道府県名カナ'])
-                    : '',
-                  postalCodeKanaItem
-                    ? han2zen(postalCodeKanaItem['市区町村名カナ'])
                     : '',
                   postalCodeRomeItem
                     ? postalCodeRomeItem['都道府県名ローマ字']
                     : '',
+                  line['市区町村コード'],
+                  line['市区町村名'],
+                  postalCodeKanaItem
+                    ? han2zen(postalCodeKanaItem['市区町村名カナ'])
+                    : '',
                   postalCodeRomeItem
                     ? postalCodeRomeItem['市区町村名ローマ字']
                     : '',
+                  line['大字町丁目コード'],
+                  line['大字町丁目名'],
+                  line['緯度'],
+                  line['経度'],
                 ]
                   .map(item =>
                     item && typeof item === 'string' ? `"${item}"` : item,
@@ -338,16 +338,16 @@ const main = async () => {
     [
       '"都道府県コード"',
       '"都道府県名"',
+      '"都道府県名カナ"',
+      '"都道府県名ローマ字"',
       '"市区町村コード"',
       '"市区町村名"',
+      '"市区町村名カナ"',
+      '"市区町村名ローマ字"',
       '"大字町丁目コード"',
       '"大字町丁目名"',
       '"緯度"',
       '"経度"',
-      '"都道府県名カナ"',
-      '"市区町村名カナ"',
-      '"都道府県名ローマ字"',
-      '"市区町村名ローマ字"',
     ].join(','),
   ]
 
@@ -364,6 +364,7 @@ const main = async () => {
       postalCodeKanaItems,
       postalCodeRomeItems,
     ).then(data => {
+      console.log(data)
       finalOutput.push(...data.records)
       process.stderr.write(JSON.stringify({ summary: data.summary }) + '\n')
     })
