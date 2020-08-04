@@ -30,6 +30,8 @@ src/config.json
 .env
 .envrc
 
-/data
 /cache
 yarn.lock
+
+!/data/latest.csv
+/data
