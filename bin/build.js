@@ -379,7 +379,7 @@ const main = async () => {
   if (process.env.CONCURRENCY === 'true') {
     await Promise.all(promises)
   }
-  fs.writeFileSync(path.join(dataDir, 'final.csv'), finalOutput.join('\n'))
+  fs.writeFileSync(path.join(dataDir, 'latest.csv'), finalOutput.join('\n'))
 }
 
 try {
