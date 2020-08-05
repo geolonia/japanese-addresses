@@ -1,5 +1,6 @@
 ---
 title: Geolonia 住所データ
+url: /
 ---
 
 # Geolonia 住所データ
