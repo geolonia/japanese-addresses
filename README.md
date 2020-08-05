@@ -42,6 +42,11 @@ CSV
 
 * [一般社団法人 不動産テック協会](https://retechjapan.org/)
 
+## 関連情報
+
+* [【プレスリリース】不動産テック協会、Geolonia と共同で不動産情報の共通 ID 付与の取り組みを開始](https://retechjapan.org/news/archives/pressrelease-20200731/)
+* [【プレスリリース】日本全国の住所マスターデータをオープンデータとして無料公開](https://geolonia.com/pressrelease/2020/08/05/japanese-addresses.html)
+
 ## ライセンス
 
 Geolonia 住所データのライセンスは以下のとおりです。
