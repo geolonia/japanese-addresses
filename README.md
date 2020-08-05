@@ -4,7 +4,7 @@
 
 本データは、国土交通省国土数値情報ダウンロードサービスで配布されている「大字・町丁目レベル位置参照情報」をベースとしていますが、「大字・町丁目レベル位置参照情報」データは年に一回更新であるのに対して、本リポジトリで配布するデータは毎月更新しています。
 
-[ダウンロード](./data/latest.csv)
+[ダウンロード](https://raw.githubusercontent.com/geolonia/japanese-addresses/master/data/latest.csv)
 
 ## 住所データ仕様
 
