@@ -2,7 +2,7 @@
 
 全国の町丁目レベル（189,540件）の住所データをオープンデータとして公開いたします。
 
-本データは、国土交通省国土数値情報ダウンロードサービスで配布されている「大字・町丁目レベル位置参照情報」をベースとしていますが、「大字・町丁目レベル位置参照情報」データは年に一回更新であるのに対して、本リポジトリで配布するデータは毎月更新しています。
+本データは、国土交通省位置参照情報ダウンロードサービスで配布されている「大字・町丁目レベル位置参照情報」をベースとしていますが、「大字・町丁目レベル位置参照情報」データは年に一回更新であるのに対して、本リポジトリで配布するデータは毎月更新しています。
 
 [ダウンロード](https://raw.githubusercontent.com/geolonia/japanese-addresses/master/data/latest.csv)
 
@@ -31,7 +31,7 @@ CSV
 
 本データは、以下のデータを元に、毎月 Geolonia にて更新作業を行っています。
 
-* [国土交通省国土数値情報ダウンロードサイト](https://nlftp.mlit.go.jp/cgi-bin/isj/dls/_choose_method.cgi)
+* [国土交通省位置参照情報ダウンロードサイト](https://nlftp.mlit.go.jp/cgi-bin/isj/dls/_choose_method.cgi)
 * [郵便番号データダウンロード - 日本郵便](https://www.post.japanpost.jp/zipcode/download.html)
 
 ## 貢献方法
