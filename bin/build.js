@@ -16,16 +16,19 @@ const isjRenames = [
     {pref: '福岡県', orig: '筑紫郡那珂川町', renamed: '那珂川市'},
 ]
 
-const isj2Postal = {
-  東津軽郡外ケ浜町: '東津軽郡外ヶ浜町',
-  龍ヶ崎市: '龍ケ崎市',
-  鎌ヶ谷市: '鎌ケ谷市',
-  袖ヶ浦市: '袖ケ浦市',
-  三宅村: '三宅島三宅村',
-  八丈町: '八丈島八丈町',
-  犬上郡大字多賀町: '犬上郡多賀町',
-  糟屋郡須恵町: '糟屋郡須惠町',
-}
+const isjPostalMappings = [
+    {pref: '青森県', postal: '東津軽郡外ヶ浜町', isj: '東津軽郡外ケ浜町'},
+    {pref: '茨城県', postal: '龍ケ崎市', isj: '龍ヶ崎市'},
+    {pref: '千葉県', postal: '鎌ケ谷市', isj: '鎌ヶ谷市'},
+    {pref: '千葉県', postal: '袖ケ浦市', isj: '袖ヶ浦市'},
+    {pref: '東京都', postal: '三宅島三宅村', isj: '三宅村',
+     kana: 'ミヤケムラ', rome: 'MIYAKE MURA'},
+    {pref: '東京都', postal: '八丈島八丈町', isj: '八丈町',
+     kana: 'ハチジョウマチ', rome: 'HACHIJO MACHI'},
+    {pref: '滋賀県', postal: '犬上郡多賀町', isj: '犬上郡大字多賀町',
+     kana: 'イヌカミグンオオアザタガチョウ', rome: 'INUKAMI GUN OAZA TAGA CHO'},
+    {pref: '福岡県', postal: '糟屋郡須惠町', isj: '糟屋郡須恵町'},
+]
 
 const han2zenMap = {
   ｶﾞ: 'ガ',
@@ -127,6 +130,41 @@ const han2zen = str => {
 const normalizePostalValue = text => {
   // return text
   return text.replace('　', '').trim()
+}
+
+const getPostalKanaOrRomeItems = (
+  prefName,
+  cityName,
+  postalCodeKanaOrRomeItems,
+  postalKanaOrRomeCityFieldName,
+  altKanaOrRomeCityFieldName,
+) => {
+  const postalAlt = isjPostalMappings.find(
+    ({pref, isj}) =>
+      (pref === prefName &&
+       isj === cityName)
+  )
+
+  if (postalAlt) {
+    const postalRecord = postalCodeKanaOrRomeItems.find(
+      item =>
+        item['都道府県名'] === prefName &&
+        item['市区町村名'] === postalAlt.postal
+    )
+
+    if (postalRecord && postalAlt[altKanaOrRomeCityFieldName]) {
+      postalRecord[postalKanaOrRomeCityFieldName] = postalAlt[altKanaOrRomeCityFieldName]
+    }
+
+    return postalRecord
+  } else {
+    const postalRecord = postalCodeKanaOrRomeItems.find(
+      item =>
+        item['都道府県名'] === prefName &&
+        item['市区町村名'] === cityName
+    )
+    return postalRecord
+  }
 }
 
 const downloadPostalCodeKana = () => {
@@ -278,17 +316,12 @@ const getAddressItems = (
                       (pref === line['都道府県名'] &&
                        orig === line['市区町村名']))
                 const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
-                const postalCodeKanaItem = postalCodeKanaItems.find(
-                  item =>
-                    item['都道府県名'] === line['都道府県名'] &&
-                    (item['市区町村名'] === cityName ||
-                      item['市区町村名'] === isj2Postal[cityName]),
+
+                const postalCodeKanaItem = getPostalKanaOrRomeItems(
+                  line['都道府県名'], cityName, postalCodeKanaItems, '市区町村名カナ', 'kana'
                 )
-                const postalCodeRomeItem = postalCodeRomeItems.find(
-                  item =>
-                    item['都道府県名'] === line['都道府県名'] &&
-                    (item['市区町村名'] === cityName ||
-                      item['市区町村名'] === isj2Postal[cityName]),
+                const postalCodeRomeItem = getPostalKanaOrRomeItems(
+                  line['都道府県名'], cityName, postalCodeRomeItems, '市区町村名ローマ字', 'rome'
                 )
 
                 if (postalCodeKanaItem && postalCodeRomeItem) {
