@@ -11,6 +11,11 @@ const cliProgress = require('cli-progress')
 
 const dataDir = path.join(path.dirname(path.dirname(__filename)), 'data')
 
+const isjRenames = [
+    {pref: '兵庫県', orig: '篠山市', renamed: '丹波篠山市'},
+    {pref: '福岡県', orig: '筑紫郡那珂川町', renamed: '那珂川市'},
+]
+
 const isj2Postal = {
   東津軽郡外ケ浜町: '東津軽郡外ヶ浜町',
   龍ヶ崎市: '龍ケ崎市',
@@ -19,8 +24,6 @@ const isj2Postal = {
   三宅村: '三宅島三宅村',
   八丈町: '八丈島八丈町',
   犬上郡大字多賀町: '犬上郡多賀町',
-  篠山市: '丹波篠山市',
-  筑紫郡那珂川町: '那珂川市',
   糟屋郡須恵町: '糟屋郡須惠町',
 }
 
@@ -269,24 +272,30 @@ const getAddressItems = (
               data.forEach((line, index) => {
                 bar.update(index + 1)
 
+                const renameEntry =
+                  isjRenames.find(
+                    ({pref, orig}) =>
+                      (pref === line['都道府県名'] &&
+                       orig === line['市区町村名']))
+                const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
                 const postalCodeKanaItem = postalCodeKanaItems.find(
                   item =>
                     item['都道府県名'] === line['都道府県名'] &&
-                    (item['市区町村名'] === line['市区町村名'] ||
-                      item['市区町村名'] === isj2Postal[line['市区町村名']]),
+                    (item['市区町村名'] === cityName ||
+                      item['市区町村名'] === isj2Postal[cityName]),
                 )
                 const postalCodeRomeItem = postalCodeRomeItems.find(
                   item =>
                     item['都道府県名'] === line['都道府県名'] &&
-                    (item['市区町村名'] === line['市区町村名'] ||
-                      item['市区町村名'] === isj2Postal[line['市区町村名']]),
+                    (item['市区町村名'] === cityName ||
+                      item['市区町村名'] === isj2Postal[cityName]),
                 )
 
                 if (postalCodeKanaItem && postalCodeRomeItem) {
                   hit++
                 } else {
                   nohit++
-                  nohitCases[line['都道府県名'] + line['市区町村名']] = true
+                  nohitCases[line['都道府県名'] + cityName] = true
                 }
                 const record = [
                   line['都道府県コード'],
@@ -298,7 +307,7 @@ const getAddressItems = (
                     ? postalCodeRomeItem['都道府県名ローマ字']
                     : '',
                   line['市区町村コード'],
-                  line['市区町村名'],
+                  cityName,
                   postalCodeKanaItem
                     ? han2zen(postalCodeKanaItem['市区町村名カナ'])
                     : '',
