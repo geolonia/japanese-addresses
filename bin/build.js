@@ -274,7 +274,7 @@ const getAddressItems = (
 ) => {
   return new Promise(resolve => {
     const records = []
-    const url = `https://nlftp.mlit.go.jp/isj/dls/data/11.0b/${prefCode}000-11.0b.zip`
+    const url = `https://nlftp.mlit.go.jp/isj/dls/data/13.0b/${prefCode}000-13.0b.zip`
 
     https.get(url, res => {
       res.pipe(unzip.Parse()).on('entry', entry => {
