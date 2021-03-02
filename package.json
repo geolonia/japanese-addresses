@@ -4,7 +4,8 @@
   "description": "",
   "main": "./bin/build.js",
   "scripts": {
-    "build": "node bin/build.js"
+    "build": "node bin/build.js",
+    "build:api": "node bin/build-api.js"
   },
   "author": "",
   "license": "MIT",
@@ -14,7 +15,8 @@
   },
   "dependencies": {
     "cli-progress": "^3.8.2",
-    "csv-parse": "^4.10.1",
-    "encoding-japanese": "^1.0.30"
+    "csv-parse": "^4.15.3",
+    "encoding-japanese": "^1.0.30",
+    "mkdirp": "^1.0.4"
   }
 }
