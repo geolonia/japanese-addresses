@@ -1,6 +1,6 @@
 const fs = require("fs");
 const parse = require("csv-parse");
-const basePath = `${__dirname}/../api`;
+const basePath = `${__dirname}/../api/ja`;
 const mkdirp = require("mkdirp");
 const path = require('path')
 
