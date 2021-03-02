@@ -37,6 +37,8 @@ CSV
 https://geolonia.github.io/japanese-addresses/api/ja.json
 ```
 
+例: [https://geolonia.github.io/japanese-addresses/api/ja.json](https://geolonia.github.io/japanese-addresses/api/ja.json)
+
 ```
 {
   "北海道": [
@@ -67,7 +69,7 @@ https://geolonia.github.io/japanese-addresses/api/<都道府県名>/<市区町�
 
 ※ 都道府県名及び市区町村名は URL エンコードを行ってください。
 
-例: https://geolonia.github.io/japanese-addresses/api/ja/%E5%8C%97%E6%B5%B7%E9%81%93/%E6%9C%AD%E5%B9%8C%E5%B8%82%E4%B8%AD%E5%A4%AE%E5%8C%BA.json
+例: [https://geolonia.github.io/japanese-addresses/api/ja/%E5%8C%97%E6%B5%B7%E9%81%93/%E6%9C%AD%E5%B9%8C%E5%B8%82%E4%B8%AD%E5%A4%AE%E5%8C%BA.json](https://geolonia.github.io/japanese-addresses/api/ja/%E5%8C%97%E6%B5%B7%E9%81%93/%E6%9C%AD%E5%B9%8C%E5%B8%82%E4%B8%AD%E5%A4%AE%E5%8C%BA.json)
 
 ```
 [
