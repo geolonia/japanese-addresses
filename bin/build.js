@@ -251,8 +251,8 @@ const downloadPostalCodeRome = async () => {
 
 module.exports.downloadPostalCodeRome = downloadPostalCodeRome
 
-const _downloadNlftpMlitFile = (prefCode, outPath) => new Promise((resolve, reject) => {
-  const url = `https://nlftp.mlit.go.jp/isj/dls/data/18.0a/${prefCode}000-18.0a.zip`
+const _downloadNlftpMlitFile = (prefCode, outPath, version) => new Promise((resolve, reject) => {
+  const url = `https://nlftp.mlit.go.jp/isj/dls/data/${version}/${prefCode}000-${version}.zip`
   https.get(url, res => {
     let atLeastOneFile = false
     res.pipe(unzip.Parse()).on('entry', entry => {
@@ -280,10 +280,100 @@ const getAddressItems = async (
 ) => {
   const recordKeys = []
   const records = []
+
+  const cityCodes = {}
+
+  let hit = 0
+  let nohit = 0
+  const nohitCases = {}
+
+  // 位置参照情報(大字・町丁目レベル)
+  const _outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
+
+  if (!fs.existsSync(_outPath)) {
+    await _downloadNlftpMlitFile(prefCode, _outPath, '13.0b')
+  }
+
+  const _buffer = await fs.promises.readFile(_outPath)
+  const _text = Encoding.convert(_buffer, {
+    from: 'SJIS',
+    to: 'UNICODE',
+    type: 'string',
+  })
+
+  const _data = csvParse(_text, {
+    columns: true,
+    skip_empty_lines: true,
+  })
+
+  const _bar = new cliProgress.SingleBar()
+  _bar.start(_data.length, 0)
+
+  _data.forEach((line, index) => {
+    _bar.update(index + 1)
+
+    const renameEntry =
+      isjRenames.find(
+        ({ pref, orig }) =>
+          (pref === line['都道府県名'] &&
+            orig === line['市区町村名']))
+    const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
+
+    const postalCodeKanaItem = getPostalKanaOrRomeItems(
+      line['都道府県名'], cityName, postalCodeKanaItems, '市区町村名カナ', 'kana',
+    )
+    const postalCodeRomeItem = getPostalKanaOrRomeItems(
+      line['都道府県名'], cityName, postalCodeRomeItems, '市区町村名ローマ字', 'rome',
+    )
+
+    if (postalCodeKanaItem && postalCodeRomeItem) {
+      hit++
+    } else {
+      nohit++
+      nohitCases[line['都道府県名'] + cityName] = true
+    }
+
+    if (!cityCodes[cityName]) {
+      cityCodes[cityName] = line['市区町村コード']
+    }
+
+    const recordKey = line['都道府県名'] + cityName + line['大字町丁目名']
+    const record = [
+      prefCode,
+      line['都道府県名'],
+      postalCodeKanaItem
+        ? han2zen(postalCodeKanaItem['都道府県名カナ'])
+        : '',
+      postalCodeRomeItem
+        ? postalCodeRomeItem['都道府県名ローマ字']
+        : '',
+      line['市区町村コード'],
+      cityName,
+      postalCodeKanaItem
+        ? han2zen(postalCodeKanaItem['市区町村名カナ'])
+        : '',
+      postalCodeRomeItem
+        ? postalCodeRomeItem['市区町村名ローマ字']
+        : '',
+      line['大字町丁目名'],
+      '',
+      ''
+    ]
+      .map(item =>
+        item && typeof item === 'string' ? `"${item}"` : item,
+      )
+      .join(',')
+
+    recordKeys.push(recordKey)
+    records.push(record)
+  }) // line iteration
+  _bar.stop()
+
+  // 位置参照情報(街区レベル)
   const outPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}.csv`)
 
   if (!fs.existsSync(outPath)) {
-    await _downloadNlftpMlitFile(prefCode, outPath)
+    await _downloadNlftpMlitFile(prefCode, outPath, '18.0a')
   }
 
   const buffer = await fs.promises.readFile(outPath)
@@ -297,10 +387,6 @@ const getAddressItems = async (
     columns: true,
     skip_empty_lines: true,
   })
-
-  let hit = 0
-  let nohit = 0
-  const nohitCases = {}
 
   const bar = new cliProgress.SingleBar()
   bar.start(data.length, 0)
@@ -329,10 +415,9 @@ const getAddressItems = async (
       nohitCases[line['都道府県名'] + cityName] = true
     }
 
-    const oazaName = line['大字・丁目名'] + line['小字・通称名']
-    const recordKey = line['都道府県名'] + cityName + oazaName
+    const recordKey = line['都道府県名'] + cityName + line['大字・丁目名']
     const record = [
-      line['都道府県コード'],
+      prefCode,
       line['都道府県名'],
       postalCodeKanaItem
         ? han2zen(postalCodeKanaItem['都道府県名カナ'])
@@ -340,7 +425,7 @@ const getAddressItems = async (
       postalCodeRomeItem
         ? postalCodeRomeItem['都道府県名ローマ字']
         : '',
-      line['市区町村コード'],
+      cityCodes[cityName],
       cityName,
       postalCodeKanaItem
         ? han2zen(postalCodeKanaItem['市区町村名カナ'])
@@ -348,7 +433,7 @@ const getAddressItems = async (
       postalCodeRomeItem
         ? postalCodeRomeItem['市区町村名ローマ字']
         : '',
-      oazaName,
+      line['大字・丁目名'] + line['小字・通称名'],
       '',
       ''
     ]
