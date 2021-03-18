@@ -252,7 +252,7 @@ const downloadPostalCodeRome = async () => {
 module.exports.downloadPostalCodeRome = downloadPostalCodeRome
 
 const _downloadNlftpMlitFile = (prefCode, outPath) => new Promise((resolve, reject) => {
-  const url = `https://nlftp.mlit.go.jp/isj/dls/data/13.0b/${prefCode}000-13.0b.zip`
+  const url = `https://nlftp.mlit.go.jp/isj/dls/data/18.0a/${prefCode}000-18.0a.zip`
   https.get(url, res => {
     let atLeastOneFile = false
     res.pipe(unzip.Parse()).on('entry', entry => {
@@ -278,8 +278,10 @@ const getAddressItems = async (
   postalCodeKanaItems,
   postalCodeRomeItems,
 ) => {
+  const recordKeys = []
   const records = []
-  const outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
+  const outPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}.csv`)
+
   if (!fs.existsSync(outPath)) {
     await _downloadNlftpMlitFile(prefCode, outPath)
   }
@@ -326,6 +328,9 @@ const getAddressItems = async (
       nohit++
       nohitCases[line['都道府県名'] + cityName] = true
     }
+
+    const oazaName = line['大字・丁目名'] + line['小字・通称名']
+    const recordKey = line['都道府県名'] + cityName + oazaName
     const record = [
       line['都道府県コード'],
       line['都道府県名'],
@@ -343,17 +348,20 @@ const getAddressItems = async (
       postalCodeRomeItem
         ? postalCodeRomeItem['市区町村名ローマ字']
         : '',
-      line['大字町丁目コード'],
-      line['大字町丁目名'],
-      line['緯度'],
-      line['経度'],
+      oazaName,
+      '',
+      ''
     ]
       .map(item =>
         item && typeof item === 'string' ? `"${item}"` : item,
       )
       .join(',')
 
-    records.push(record)
+    // to avoid duplication
+    if (!recordKeys.includes(recordKey)) {
+      recordKeys.push(recordKey)
+      records.push(record)
+    }
   }) // line iteration
   bar.stop()
   const summary = { prefCode, hit, nohit, nohitCases: Object.keys(nohitCases) }
@@ -382,10 +390,9 @@ const main = async () => {
       '"市区町村名"',
       '"市区町村名カナ"',
       '"市区町村名ローマ字"',
-      '"大字町丁目コード"',
       '"大字町丁目名"',
-      '"緯度"',
-      '"経度"',
+      '"大字町丁目名カナ"',
+      '"大字町丁目名ローマ字"'
     ].join(','),
   ]
 
