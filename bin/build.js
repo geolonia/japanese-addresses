@@ -513,7 +513,10 @@ const main = async () => {
   ]
 
   const promises = []
-  for (let i = 1; i < 48; i++) {
+
+  const prefCodeArray = process.argv[2] ? [process.argv[2]] : Array.from(Array(47), (v, k) => k + 1)
+
+  for (let i of prefCodeArray) {
     let prefCode = i.toString()
     if (i < 10) {
       prefCode = `0${prefCode}`
