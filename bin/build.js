@@ -273,44 +273,35 @@ const _downloadNlftpMlitFile = (prefCode, outPath, version) => new Promise((reso
   })
 })
 
-const getAddressItems = async (
-  prefCode,
-  postalCodeKanaItems,
-  postalCodeRomeItems,
-) => {
+// 位置参照情報(大字・町丁目レベル)から住所データを取得する
+const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems) => {
   const recordKeys = []
   const records = []
-
   const cityCodes = {}
 
-  let hit = 0
-  let nohit = 0
-  const nohitCases = {}
+  const outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
 
-  // 位置参照情報(大字・町丁目レベル)
-  const _outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
-
-  if (!fs.existsSync(_outPath)) {
-    await _downloadNlftpMlitFile(prefCode, _outPath, '13.0b')
+  if (!fs.existsSync(outPath)) {
+    await _downloadNlftpMlitFile(prefCode, outPath, '13.0b')
   }
 
-  const _buffer = await fs.promises.readFile(_outPath)
-  const _text = Encoding.convert(_buffer, {
+  const buffer = await fs.promises.readFile(outPath)
+  const text = Encoding.convert(buffer, {
     from: 'SJIS',
     to: 'UNICODE',
     type: 'string',
   })
 
-  const _data = csvParse(_text, {
+  const data = csvParse(text, {
     columns: true,
     skip_empty_lines: true,
   })
 
-  const _bar = new cliProgress.SingleBar()
-  _bar.start(_data.length, 0)
+  const bar = new cliProgress.SingleBar()
+  bar.start(data.length, 0)
 
-  _data.forEach((line, index) => {
-    _bar.update(index + 1)
+  data.forEach((line, index) => {
+    bar.update(index + 1)
 
     const renameEntry =
       isjRenames.find(
@@ -325,13 +316,6 @@ const getAddressItems = async (
     const postalCodeRomeItem = getPostalKanaOrRomeItems(
       line['都道府県名'], cityName, postalCodeRomeItems, '市区町村名ローマ字', 'rome',
     )
-
-    if (postalCodeKanaItem && postalCodeRomeItem) {
-      hit++
-    } else {
-      nohit++
-      nohitCases[line['都道府県名'] + cityName] = true
-    }
 
     if (!cityCodes[cityName]) {
       cityCodes[cityName] = line['市区町村コード']
@@ -367,9 +351,17 @@ const getAddressItems = async (
     recordKeys.push(recordKey)
     records.push(record)
   }) // line iteration
-  _bar.stop()
+  bar.stop()
 
-  // 位置参照情報(街区レベル)
+  return { recordKeys, records, cityCodes }
+}
+
+// 位置参照情報(街区レベル)から住所データを取得する
+const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems, recordKeys, records, cityCodes) => {
+  let hit = 0
+  let nohit = 0
+  const nohitCases = {}
+
   const outPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}.csv`)
 
   if (!fs.existsSync(outPath)) {
@@ -450,6 +442,45 @@ const getAddressItems = async (
   }) // line iteration
   bar.stop()
   const summary = { prefCode, hit, nohit, nohitCases: Object.keys(nohitCases) }
+
+  return { records, summary }
+}
+
+const getAddressItems = async (
+  prefCode,
+  postalCodeKanaItems,
+  postalCodeRomeItems,
+) => {
+  let recordKeys = []
+  let records = []
+  let cityCodes = {}
+  let summary = {}
+
+  await getOazaAddressItems(
+    prefCode,
+    postalCodeKanaItems,
+    postalCodeRomeItems,
+  ).then(data => {
+    recordKeys = data.recordKeys
+    records = data.records
+    cityCodes = data.cityCodes
+  }).catch(e => {
+    console.error(e)
+  })
+
+  await getGaikuAddressItems(
+    prefCode,
+    postalCodeKanaItems,
+    postalCodeRomeItems,
+    recordKeys,
+    records,
+    cityCodes
+  ).then(data => {
+    records = data.records
+    summary = data.summary
+  }).catch(e => {
+    console.error(e)
+  })
 
   return { records, summary }
 }
