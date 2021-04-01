@@ -35,3 +35,5 @@ yarn.lock
 
 /data/*
 !/data/latest.csv
+!/data/latest_v2.csv
+

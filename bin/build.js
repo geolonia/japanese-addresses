@@ -549,7 +549,7 @@ const main = async () => {
     await Promise.all(promises)
   }
 
-  await fs.promises.writeFile(path.join(dataDir, 'latest.csv'), finalOutput.join('\n'))
+  await fs.promises.writeFile(path.join(dataDir, 'latest_v2.csv'), finalOutput.join('\n'))
 }
 
 try {
