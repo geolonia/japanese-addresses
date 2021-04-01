@@ -9,6 +9,7 @@ const Encoding = require('encoding-japanese')
 const iconv = require('iconv-lite')
 const csvParse = require('csv-parse/lib/sync')
 const cliProgress = require('cli-progress')
+// const performance = require('perf_hooks').performance
 
 const dataDir = path.join(path.dirname(path.dirname(__filename)), 'data')
 
@@ -308,7 +309,7 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
   bar.start(data.length, 0)
 
   for (let index = 0; index < data.length; index++) {
-    line = data[index]
+    const line = data[index]
 
     bar.update(index + 1)
 
@@ -390,7 +391,7 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
   let count = 0
 
   for (let index = 0; index < data.length; index++) {
-    line = data[index]
+    const line = data[index]
 
     bar.update(index + 1)
 
@@ -401,6 +402,13 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
             orig === line['市区町村名']))
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
 
+    const recordKey = line['都道府県名'] + cityName + line['大字・丁目名']
+
+    // to avoid duplication
+    if (recordKeys.includes(recordKey)) {
+      continue
+    }
+
     const postalCodeKanaItem = getPostalKanaOrRomeItems(
       line['都道府県名'], cityName, postalCodeKanaItems, '市区町村名カナ', 'kana',
     )
@@ -408,7 +416,6 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
       line['都道府県名'], cityName, postalCodeRomeItems, '市区町村名ローマ字', 'rome',
     )
 
-    const recordKey = line['都道府県名'] + cityName + line['大字・丁目名']
     const record = [
       prefCode,
       line['都道府県名'],
@@ -435,12 +442,9 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
       )
       .join(',')
 
-    // to avoid duplication
-    if (!recordKeys.includes(recordKey)) {
-      recordKeys.push(recordKey)
-      records.push(record)
-      count++
-    }
+    recordKeys.push(recordKey)
+    records.push(record)
+    count++
   } // line iteration
   bar.stop()
 
@@ -519,9 +523,9 @@ const main = async () => {
 
   const prefCodeArray = process.argv[2] ? [process.argv[2]] : Array.from(Array(47), (v, k) => k + 1)
 
-  for (let i of prefCodeArray) {
-    let prefCode = i.toString()
-    if (i < 10) {
+  for (let i = 0; i < prefCodeArray.length; i++) {
+    let prefCode = prefCodeArray[i].toString()
+    if (prefCodeArray[i] < 10) {
       prefCode = `0${prefCode}`
     }
     // process.stderr.write(`memoryUsed: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB\n`)
