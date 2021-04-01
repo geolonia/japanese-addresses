@@ -9,7 +9,7 @@ const Encoding = require('encoding-japanese')
 const iconv = require('iconv-lite')
 const csvParse = require('csv-parse/lib/sync')
 const cliProgress = require('cli-progress')
-// const performance = require('perf_hooks').performance
+const performance = require('perf_hooks').performance
 
 const dataDir = path.join(path.dirname(path.dirname(__filename)), 'data')
 
@@ -493,6 +493,7 @@ const getAddressItems = async (
 }
 
 const main = async () => {
+  var t0 = performance.now();
   process.stderr.write('郵便番号辞書のダウンロード中...')
   const [
     postalCodeKanaItems,
@@ -550,6 +551,8 @@ const main = async () => {
   }
 
   await fs.promises.writeFile(path.join(dataDir, 'latest_v2.csv'), finalOutput.join('\n'))
+  var t1 = performance.now();
+  console.log("build.js took " + (t1 - t0) + " milliseconds.");
 }
 
 try {
