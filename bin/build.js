@@ -136,12 +136,12 @@ const normalizePostalValue = text => {
 }
 
 const removeChome = text => {
-  const regexp = /[二三四五六七八九]?十?[一二三四五六七八九]?丁目$/
+  const regexp = /[二三四五六七八九]?十?[一二三四五六七八九]?丁目?$/
   return text.replace(regexp, '')
 }
 
 const getChomeNumber = (text, suffix = '') => {
-  const regexp = /([二三四五六七八九]?十?[一二三四五六七八九]?)丁目$/
+  const regexp = /([二三四五六七八九]?十?[一二三四五六七八九]?)丁目?$/
   const match = text.match(regexp)
   if (match && match[1]) {
     return kanji2number(match[1]) + suffix
@@ -405,10 +405,10 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
         : '',
       line['大字町丁目名'],
       postalCodeKanaItem
-        ? han2zen(removeStringEnclosedInParentheses(postalCodeKanaItem['町域名カナ'])) + getChomeNumber(line['大字町丁目名'], 'チョウメ')
+        ? han2zen(removeStringEnclosedInParentheses(postalCodeKanaItem['町域名カナ'])) + (getChomeNumber(line['大字町丁目名']) !== '' ? ` ${getChomeNumber(line['大字町丁目名'])}` : '')
         : '',
       postalCodeRomeItem
-        ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + getChomeNumber(line['大字町丁目名'])
+        ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + (getChomeNumber(line['大字町丁目名']) !== '' ? ` ${getChomeNumber(line['大字町丁目名'])}` : '')
         : '',
     ]
       .map(item =>
@@ -494,10 +494,10 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
         : '',
       townName,
       postalCodeKanaItem
-        ? han2zen(removeStringEnclosedInParentheses(postalCodeKanaItem['町域名カナ'])) + getChomeNumber(townName, 'チョウメ')
+        ? han2zen(removeStringEnclosedInParentheses(postalCodeKanaItem['町域名カナ'])) + (getChomeNumber(townName) !== '' ? ` ${getChomeNumber(townName)}` : '')
         : '',
       postalCodeRomeItem
-        ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + getChomeNumber(townName)
+        ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + (getChomeNumber(townName) !== '' ? ` ${getChomeNumber(townName)}` : '')
         : '',
     ]
       .map(item =>
