@@ -10,6 +10,7 @@ const iconv = require('iconv-lite')
 const csvParse = require('csv-parse/lib/sync')
 const cliProgress = require('cli-progress')
 const performance = require('perf_hooks').performance
+const kanji2number = require('@geolonia/japanese-numeral').kanji2number
 
 const dataDir = path.join(path.dirname(path.dirname(__filename)), 'data')
 
@@ -134,9 +135,30 @@ const normalizePostalValue = text => {
   return text.replace('　', '').trim()
 }
 
+const removeChome = text => {
+  const regexp = /[二三四五六七八九]?十?[一二三四五六七八九]?丁目?$/
+  return text.replace(regexp, '')
+}
+
+const getChomeNumber = (text, suffix = '') => {
+  const regexp = /([二三四五六七八九]?十?[一二三四五六七八九]?)丁目?$/
+  const match = text.match(regexp)
+  if (match && match[1]) {
+    return kanji2number(match[1]) + suffix
+  } else {
+    return ''
+  }
+}
+
+const removeStringEnclosedInParentheses = text => {
+  const regexp = /\(.+\)$/
+  return text.replace(regexp, '')
+}
+
 const getPostalKanaOrRomeItems = (
   prefName,
   cityName,
+  townName,
   postalCodeKanaOrRomeItems,
   postalKanaOrRomeCityFieldName,
   altKanaOrRomeCityFieldName,
@@ -146,12 +168,28 @@ const getPostalKanaOrRomeItems = (
   )
 
   if (postalAlt) {
-    const postalRecord = postalCodeKanaOrRomeItems.find(
+    let postalRecord = postalCodeKanaOrRomeItems.find(
       item =>
         item['都道府県名'] === prefName &&
-        item['市区町村名'] === postalAlt.postal
+        item['市区町村名'] === postalAlt.postal &&
+        item['町域名'].indexOf(removeChome(townName)) === 0
       ,
     )
+
+    if (!postalRecord) {
+      postalRecord = postalCodeKanaOrRomeItems.find(
+        item =>
+          item['都道府県名'] === prefName &&
+          item['市区町村名'] === postalAlt.postal
+        ,
+      )
+      if (postalRecord['町域名カナ']) {
+        postalRecord['町域名カナ'] = ''
+      }
+      if (postalRecord['町域名ローマ字']) {
+        postalRecord['町域名ローマ字'] = ''
+      }
+    }
 
     if (postalRecord && postalAlt[altKanaOrRomeCityFieldName]) {
       postalRecord[postalKanaOrRomeCityFieldName] = postalAlt[altKanaOrRomeCityFieldName]
@@ -159,12 +197,28 @@ const getPostalKanaOrRomeItems = (
 
     return postalRecord
   } else {
-    const postalRecord = postalCodeKanaOrRomeItems.find(
+    let postalRecord = postalCodeKanaOrRomeItems.find(
       item =>
         item['都道府県名'] === prefName &&
-        item['市区町村名'] === cityName
+        item['市区町村名'] === cityName &&
+        item['町域名'].indexOf(removeChome(townName)) === 0
       ,
     )
+
+    if (!postalRecord) {
+      postalRecord = postalCodeKanaOrRomeItems.find(
+        item =>
+          item['都道府県名'] === prefName &&
+          item['市区町村名'] === cityName
+        ,
+      )
+      if (postalRecord['町域名カナ']) {
+        postalRecord['町域名カナ'] = ''
+      }
+      if (postalRecord['町域名ローマ字']) {
+        postalRecord['町域名ローマ字'] = ''
+      }
+    }
     return postalRecord
   }
 }
@@ -321,10 +375,10 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
 
     const postalCodeKanaItem = getPostalKanaOrRomeItems(
-      line['都道府県名'], cityName, postalCodeKanaItems, '市区町村名カナ', 'kana',
+      line['都道府県名'], cityName, line['大字町丁目名'], postalCodeKanaItems, '市区町村名カナ', 'kana',
     )
     const postalCodeRomeItem = getPostalKanaOrRomeItems(
-      line['都道府県名'], cityName, postalCodeRomeItems, '市区町村名ローマ字', 'rome',
+      line['都道府県名'], cityName, line['大字町丁目名'], postalCodeRomeItems, '市区町村名ローマ字', 'rome',
     )
 
     if (!cityCodes[cityName]) {
@@ -350,8 +404,12 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
         ? postalCodeRomeItem['市区町村名ローマ字']
         : '',
       line['大字町丁目名'],
-      '',
-      ''
+      postalCodeKanaItem
+        ? han2zen(removeStringEnclosedInParentheses(postalCodeKanaItem['町域名カナ'])) + (getChomeNumber(line['大字町丁目名']) !== '' ? ` ${getChomeNumber(line['大字町丁目名'])}` : '')
+        : '',
+      postalCodeRomeItem
+        ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + (getChomeNumber(line['大字町丁目名']) !== '' ? ` ${getChomeNumber(line['大字町丁目名'])}` : '')
+        : '',
     ]
       .map(item =>
         item && typeof item === 'string' ? `"${item}"` : item,
@@ -409,11 +467,12 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
       continue
     }
 
+    const townName = line['大字・丁目名'] + line['小字・通称名']
     const postalCodeKanaItem = getPostalKanaOrRomeItems(
-      line['都道府県名'], cityName, postalCodeKanaItems, '市区町村名カナ', 'kana',
+      line['都道府県名'], cityName, townName, postalCodeKanaItems, '市区町村名カナ', 'kana',
     )
     const postalCodeRomeItem = getPostalKanaOrRomeItems(
-      line['都道府県名'], cityName, postalCodeRomeItems, '市区町村名ローマ字', 'rome',
+      line['都道府県名'], cityName, townName, postalCodeRomeItems, '市区町村名ローマ字', 'rome',
     )
 
     const record = [
@@ -433,9 +492,13 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
       postalCodeRomeItem
         ? postalCodeRomeItem['市区町村名ローマ字']
         : '',
-      line['大字・丁目名'] + line['小字・通称名'],
-      '',
-      ''
+      townName,
+      postalCodeKanaItem
+        ? han2zen(removeStringEnclosedInParentheses(postalCodeKanaItem['町域名カナ'])) + (getChomeNumber(townName) !== '' ? ` ${getChomeNumber(townName)}` : '')
+        : '',
+      postalCodeRomeItem
+        ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + (getChomeNumber(townName) !== '' ? ` ${getChomeNumber(townName)}` : '')
+        : '',
     ]
       .map(item =>
         item && typeof item === 'string' ? `"${item}"` : item,

@@ -16,6 +16,7 @@
     "unzipper": "^0.10.11"
   },
   "dependencies": {
+    "@geolonia/japanese-numeral": "^0.1.14",
     "cli-progress": "^3.8.2",
     "csv-parse": "^4.15.3",
     "encoding-japanese": "^1.0.30",
