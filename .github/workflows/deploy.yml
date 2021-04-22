@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: mkdir data
+      - run: mkdir data || true
       - run: npm install
       - run: node bin/build.js
       - run: node bin/build-api.js staging
