@@ -1,6 +1,6 @@
 const fs = require("fs");
 const parse = require("csv-parse");
-const basePath = `${__dirname}/../api/ja`;
+const basePath = process.argv[2] && process.argv[2] === 'staging' ? `${__dirname}/../build/staging-api/ja` : `${__dirname}/../api/ja`;
 const mkdirp = require("mkdirp");
 const path = require('path')
 
