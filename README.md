@@ -64,7 +64,7 @@ https://geolonia.github.io/japanese-addresses/api/ja.json
 ### 町丁目エンドポイント
 
 ```
-https://geolonia.github.io/japanese-addresses/api/<都道府県名>/<市区町村名>.json
+https://geolonia.github.io/japanese-addresses/api/ja/<都道府県名>/<市区町村名>.json
 ```
 
 ※ 都道府県名及び市区町村名は URL エンコードを行ってください。
