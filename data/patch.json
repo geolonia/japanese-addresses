@@ -367,7 +367,7 @@
     "緯度": null,
     "経度": null,
     "参照": [
-      "https://www.city.moriya.ibaraki.jp/section/0230/info/matunamihennkou.html",
+      "https://www.city.moriya.ibaraki.jp/section/0230/info/matunamihennkou.html"
     ],
     "更新日": "2020/05/06"
   },
@@ -386,7 +386,7 @@
     "緯度": null,
     "経度": null,
     "参照": [
-      "https://www.city.moriya.ibaraki.jp/section/0230/info/matunamihennkou.html",
+      "https://www.city.moriya.ibaraki.jp/section/0230/info/matunamihennkou.html"
     ],
     "更新日": "2020/05/06"
   },
@@ -405,7 +405,7 @@
     "緯度": null,
     "経度": null,
     "参照": [
-      "https://www.city.moriya.ibaraki.jp/section/0230/info/matunamihennkou.html",
+      "https://www.city.moriya.ibaraki.jp/section/0230/info/matunamihennkou.html"
     ],
     "更新日": "2020/05/06"
   },
@@ -424,7 +424,7 @@
     "緯度": null,
     "経度": null,
     "参照": [
-      "https://www.city.moriya.ibaraki.jp/section/0230/info/matunamihennkou.html",
+      "https://www.city.moriya.ibaraki.jp/section/0230/info/matunamihennkou.html"
     ],
     "更新日": "2020/05/06"
   },
@@ -443,7 +443,7 @@
     "緯度": null,
     "経度": null,
     "参照": [
-      "https://www.city.zama.kanagawa.jp/www/contents/1580186527121/index.html",
+      "https://www.city.zama.kanagawa.jp/www/contents/1580186527121/index.html"
     ],
     "更新日": "2020/05/06"
   },
@@ -462,7 +462,7 @@
     "緯度": null,
     "経度": null,
     "参照": [
-      "https://www.city.zama.kanagawa.jp/www/contents/1580186527121/index.html",
+      "https://www.city.zama.kanagawa.jp/www/contents/1580186527121/index.html"
     ],
     "更新日": "2020/05/06"
   },
@@ -481,7 +481,7 @@
     "緯度": null,
     "経度": null,
     "参照": [
-      "https://www.city.zama.kanagawa.jp/www/contents/1580186527121/index.html",
+      "https://www.city.zama.kanagawa.jp/www/contents/1580186527121/index.html"
     ],
     "更新日": "2020/05/06"
   },
@@ -500,7 +500,7 @@
     "緯度": null,
     "経度": null,
     "参照": [
-      "https://www.city.zama.kanagawa.jp/www/contents/1580186527121/index.html",
+      "https://www.city.zama.kanagawa.jp/www/contents/1580186527121/index.html"
     ],
     "更新日": "2020/05/06"
   },
@@ -519,7 +519,64 @@
     "緯度": null,
     "経度": null,
     "参照": [
-      "https://www.city.zama.kanagawa.jp/www/contents/1580186527121/index.html",
+      "https://www.city.zama.kanagawa.jp/www/contents/1580186527121/index.html"
+    ],
+    "更新日": "2020/05/06"
+  },
+  {
+    "都道府県コード": "14",
+    "都道府県名": "千葉県",
+    "都道府県名カナ": "チバケン",
+    "都道府県名ローマ字": "CHIBA KEN",
+    "市区町村コード": "12210",
+    "市区町村名": "茂原市",
+    "市区町村名カナ": "モバラシ",
+    "市区町村名ローマ字": "MOBARA SHI",
+    "大字町丁目名": "大芝一丁目",
+    "大字町丁目名カナ": "オオシバ 1",
+    "大字町丁目名ローマ字": "OSHIBA 1",
+    "緯度": null,
+    "経度": null,
+    "参照": [
+      "http://www.city.mobara.chiba.jp/0000005403.html"
+    ],
+    "更新日": "2020/05/06"
+  },
+  {
+    "都道府県コード": "14",
+    "都道府県名": "千葉県",
+    "都道府県名カナ": "チバケン",
+    "都道府県名ローマ字": "CHIBA KEN",
+    "市区町村コード": "12210",
+    "市区町村名": "茂原市",
+    "市区町村名カナ": "モバラシ",
+    "市区町村名ローマ字": "MOBARA SHI",
+    "大字町丁目名": "大芝二丁目",
+    "大字町丁目名カナ": "オオシバ 2",
+    "大字町丁目名ローマ字": "OSHIBA 2",
+    "緯度": null,
+    "経度": null,
+    "参照": [
+      "http://www.city.mobara.chiba.jp/0000005403.html"
+    ],
+    "更新日": "2020/05/06"
+  },
+  {
+    "都道府県コード": "14",
+    "都道府県名": "千葉県",
+    "都道府県名カナ": "チバケン",
+    "都道府県名ローマ字": "CHIBA KEN",
+    "市区町村コード": "12210",
+    "市区町村名": "茂原市",
+    "市区町村名カナ": "モバラシ",
+    "市区町村名ローマ字": "MOBARA SHI",
+    "大字町丁目名": "大芝三丁目",
+    "大字町丁目名カナ": "オオシバ 3",
+    "大字町丁目名ローマ字": "OSHIBA 3",
+    "緯度": null,
+    "経度": null,
+    "参照": [
+      "http://www.city.mobara.chiba.jp/0000005403.html"
     ],
     "更新日": "2020/05/06"
   }
