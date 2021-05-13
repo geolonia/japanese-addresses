@@ -1,0 +1,31 @@
+name: Deploy Staging API
+on:
+  push:
+    branches:
+      - develop
+    tags:
+      - "!*"
+
+jobs:
+  deploy-staging-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: mkdir data || true
+      - run: npm install
+      - run: node bin/build.js
+      - run: node bin/build-api.js staging
+      - uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+          path: gh-pages
+      - name: Deploy generated files
+        working-directory: gh-pages
+        run: |
+          rm -rf staging-api
+          mv ../build/staging-api .
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git add staging-api > /dev/null 2>&1
+          git commit -m "Deploy" > /dev/null 2>&1
+          git push origin gh-pages

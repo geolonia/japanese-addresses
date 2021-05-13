@@ -1,31 +1,28 @@
-name: Deploy
+name: Deploy Versioned API
 on:
   push:
-    branches:
-      - develop
     tags:
-      - "!*"
+      - 'v*'
 
 jobs:
-  build-deploy:
+  deploy-versioned-api:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - run: mkdir data || true
       - run: npm install
       - run: node bin/build.js
-      - run: node bin/build-api.js staging
-      - uses: actions/checkout@v2
+      - run: node bin/build-api.js
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+      - run: echo "${{ steps.get_version.outputs.VERSION }}"
+      - name: "Configure AWS credentials"
+        uses: aws-actions/configure-aws-credentials@v1
         with:
-          ref: gh-pages
-          path: gh-pages
-      - name: Deploy generated files
-        working-directory: gh-pages
-        run: |
-          rm -rf staging-api
-          mv ../build/staging-api .
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
-          git add staging-api > /dev/null 2>&1
-          git commit -m "Deploy" > /dev/null 2>&1
-          git push origin gh-pages
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+      - name: S3 sync
+        working-directory: build/api
+        run: aws s3 sync . s3://${{ secrets.AWS_BUCKET_NAME }}/${{ steps.get_version.outputs.VERSION }} --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers
