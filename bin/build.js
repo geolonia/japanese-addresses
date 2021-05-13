@@ -4,6 +4,7 @@ const fs = require('fs')
 const path = require('path')
 const https = require('https')
 
+const { promisify } = require('util')
 const async = require('async')
 const unzip = require('unzipper')
 const Encoding = require('encoding-japanese')
@@ -12,6 +13,8 @@ const csvParse = require('csv-parse/lib/sync')
 const cliProgress = require('cli-progress')
 const performance = require('perf_hooks').performance
 const kanji2number = require('@geolonia/japanese-numeral').kanji2number
+
+const sleep = promisify(setTimeout)
 
 const dataDir = path.join(path.dirname(path.dirname(__filename)), 'data')
 
@@ -83,6 +86,14 @@ const prefNames = [
   '鹿児島県',
   '沖縄県',
 ]
+
+const toPrefCode = prefNumber => {
+  let prefCode = prefNumber.toString()
+  if (prefNumber < 10) {
+    prefCode = `0${prefCode}`
+  }
+  return prefCode
+}
 
 const han2zenMap = {
   ｶﾞ: 'ガ',
@@ -378,11 +389,14 @@ const _downloadNlftpMlitFile = (prefCode, outPath, version) => new Promise((reso
 })
 
 const _convertEncoding = (inPath, outPath) => new Promise(resolve => {
+  const tmpOutPath = outPath + '.tmp'
   fs.createReadStream(inPath)
     .pipe(iconv.decodeStream('Shift_JIS'))
-    .pipe(fs.createWriteStream(outPath))
+    .pipe(fs.createWriteStream(tmpOutPath))
     .on('finish', () => {
-      resolve(outPath)
+      fs.rename(tmpOutPath, outPath, () => {
+        resolve(outPath)
+      })
     })
 })
 
@@ -392,12 +406,11 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
   const records = []
   const cityCodes = {}
 
-  const inPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}_sjis.csv`)
   const outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
 
-  if (!fs.existsSync(inPath) || !fs.existsSync(outPath)) {
-    await _downloadNlftpMlitFile(prefCode, inPath, '13.0b')
-    await _convertEncoding(inPath, outPath)
+  while (!fs.existsSync(outPath)) {
+    console.log(`${prefCode}: waiting for nlftp_mlit_130b_${prefCode}.csv...`)
+    await sleep(1000)
   }
 
   const text = await fs.promises.readFile(outPath)
@@ -479,12 +492,11 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
 const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems, cityCodes) => {
   const records = []
   const recordKeys = []
-  const inPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}_sjis.csv`)
   const outPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}.csv`)
 
-  if (!fs.existsSync(inPath) || !fs.existsSync(outPath)) {
-    await _downloadNlftpMlitFile(prefCode, inPath, '18.0a')
-    await _convertEncoding(inPath, outPath)
+  while (!fs.existsSync(outPath)) {
+    console.log(`${prefCode}: waiting for nlftp_mlit_180a_${prefCode}.csv...`)
+    await sleep(1000)
   }
 
   const text = await fs.promises.readFile(outPath)
@@ -624,6 +636,36 @@ const main = async () => {
 
   const prefCodeArray = process.argv[2] ? [process.argv[2]] : Array.from(Array(47), (v, k) => k + 1)
 
+  const downloadQueue = async.queue(async ({ prefCode, kind }) => {
+    if (kind === 'nlftp_mlit_180a') {
+      const inPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}_sjis.csv`)
+      const outPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}.csv`)
+
+      if (!fs.existsSync(inPath) || !fs.existsSync(outPath)) {
+        await _downloadNlftpMlitFile(prefCode, inPath, '18.0a')
+        await _convertEncoding(inPath, outPath)
+      }
+    } else if (kind === 'nlftp_mlit_130b') {
+      const inPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}_sjis.csv`)
+      const outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
+
+      if (!fs.existsSync(inPath) || !fs.existsSync(outPath)) {
+        await _downloadNlftpMlitFile(prefCode, inPath, '13.0b')
+        await _convertEncoding(inPath, outPath)
+      }
+    } else {
+      throw new Error(`I don't know how to download: ${kind}`)
+    }
+  }, 4)
+
+  prefCodeArray.forEach(prefNumber => {
+    const prefCode = toPrefCode(prefNumber)
+    downloadQueue.push([
+      { kind: 'nlftp_mlit_180a', prefCode },
+      { kind: 'nlftp_mlit_130b', prefCode },
+    ])
+  })
+
   const outfile = await fs.promises.open(path.join(dataDir, 'latest_v2.csv'), 'w')
   const outfileWriterQueue = async.queue(async str => {
     await outfile.write(str)
@@ -644,10 +686,7 @@ const main = async () => {
   ].join(',') + '\n')
 
   for (let i = 0; i < prefCodeArray.length; i++) {
-    let prefCode = prefCodeArray[i].toString()
-    if (prefCodeArray[i] < 10) {
-      prefCode = `0${prefCode}`
-    }
+    const prefCode = toPrefCode(prefCodeArray[i])
 
     const tp0 = performance.now()
     const data = await getAddressItems(
@@ -679,5 +718,8 @@ try {
 }
 
 if (require.main === module) {
-  main()
+  main().catch(error => {
+    console.error(error)
+    process.exit(1)
+  })
 }
