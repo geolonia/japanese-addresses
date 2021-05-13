@@ -375,9 +375,12 @@ const _downloadNlftpMlitFile = (prefCode, outPath, version) => new Promise((reso
         return
       }
       atLeastOneFile = true
+      const tmpOutPath = outPath + '.tmp'
       entry
-        .pipe(fs.createWriteStream(outPath))
+        .pipe(iconv.decodeStream('Shift_JIS'))
+        .pipe(fs.createWriteStream(tmpOutPath))
         .on('finish', () => {
+          fs.renameSync(tmpOutPath, outPath)
           resolve(outPath)
         })
     }).on('end', () => {
@@ -386,18 +389,6 @@ const _downloadNlftpMlitFile = (prefCode, outPath, version) => new Promise((reso
       }
     })
   })
-})
-
-const _convertEncoding = (inPath, outPath) => new Promise(resolve => {
-  const tmpOutPath = outPath + '.tmp'
-  fs.createReadStream(inPath)
-    .pipe(iconv.decodeStream('Shift_JIS'))
-    .pipe(fs.createWriteStream(tmpOutPath))
-    .on('finish', () => {
-      fs.rename(tmpOutPath, outPath, () => {
-        resolve(outPath)
-      })
-    })
 })
 
 // 位置参照情報(大字・町丁目レベル)から住所データを取得する
@@ -636,34 +627,27 @@ const main = async () => {
 
   const prefCodeArray = process.argv[2] ? [process.argv[2]] : Array.from(Array(47), (v, k) => k + 1)
 
-  const downloadQueue = async.queue(async ({ prefCode, kind }) => {
-    if (kind === 'nlftp_mlit_180a') {
-      const inPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}_sjis.csv`)
-      const outPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}.csv`)
+  const download130bQueue = async.queue(async prefCode => {
+    const outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
 
-      if (!fs.existsSync(inPath) || !fs.existsSync(outPath)) {
-        await _downloadNlftpMlitFile(prefCode, inPath, '18.0a')
-        await _convertEncoding(inPath, outPath)
-      }
-    } else if (kind === 'nlftp_mlit_130b') {
-      const inPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}_sjis.csv`)
-      const outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
-
-      if (!fs.existsSync(inPath) || !fs.existsSync(outPath)) {
-        await _downloadNlftpMlitFile(prefCode, inPath, '13.0b')
-        await _convertEncoding(inPath, outPath)
-      }
-    } else {
-      throw new Error(`I don't know how to download: ${kind}`)
+    if (!fs.existsSync(outPath)) {
+      await _downloadNlftpMlitFile(prefCode, outPath, '13.0b')
     }
-  }, 4)
+  }, 1)
+
+  const download180aQueue = async.queue(async prefCode => {
+    const outPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}.csv`)
+
+    if (!fs.existsSync(outPath)) {
+      await _downloadNlftpMlitFile(prefCode, outPath, '18.0a')
+    }
+  }, 3)
+
 
   prefCodeArray.forEach(prefNumber => {
     const prefCode = toPrefCode(prefNumber)
-    downloadQueue.push([
-      { kind: 'nlftp_mlit_180a', prefCode },
-      { kind: 'nlftp_mlit_130b', prefCode },
-    ])
+    download130bQueue.push(prefCode)
+    download180aQueue.push(prefCode)
   })
 
   const outfile = await fs.promises.open(path.join(dataDir, 'latest_v2.csv'), 'w')
