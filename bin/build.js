@@ -467,7 +467,7 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
       .map(item =>
         item && typeof item === 'string' ? `"${item}"` : item,
       )
-      .join(',')
+      .join(',') + '\n'
 
     recordKeys.push(recordKey)
     records.push(record)
@@ -480,9 +480,8 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
 }
 
 // 位置参照情報(街区レベル)から住所データを取得する
-const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems, cityCodes) => {
+const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems, recordKeys, cityCodes) => {
   const records = []
-  const recordKeys = []
   const outPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}.csv`)
 
   while (!fs.existsSync(outPath)) {
@@ -558,7 +557,7 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
       .map(item =>
         item && typeof item === 'string' ? `"${item}"` : item,
       )
-      .join(',')
+      .join(',') + '\n'
 
     recordKeys.push(recordKey)
     records.push(record)
@@ -576,7 +575,7 @@ const getAddressItems = async (
   postalCodeKanaItems,
   postalCodeRomeItems,
 ) => {
-  // let recordKeys = []
+  let recordKeys = []
   let records = []
   let cityCodes = {}
 
@@ -594,7 +593,7 @@ const getAddressItems = async (
     filteredPostalCodeRomeItems,
   )
 
-  // recordKeys = oazaData.recordKeys
+  recordKeys = oazaData.recordKeys
   records = oazaData.records
   cityCodes = oazaData.cityCodes
 
@@ -602,6 +601,7 @@ const getAddressItems = async (
     prefCode,
     filteredPostalCodeKanaItems,
     filteredPostalCodeRomeItems,
+    recordKeys,
     cityCodes,
   )
 
@@ -681,11 +681,7 @@ const main = async () => {
     const tp1 = performance.now()
     console.log(`${prefCode}: build took ` + (tp1 - tp0) + ' milliseconds.')
 
-    const recordsLength = data.records.length
-    for (let index = 0; index < recordsLength; index++) {
-      const line = data.records[index]
-      outfileWriterQueue.push(outfile.write(line) + '\n')
-    }
+    outfileWriterQueue.push(data.records)
   } // pref loop
 
   await outfileWriterQueue.drain()
