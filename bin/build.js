@@ -4,6 +4,8 @@ const fs = require('fs')
 const path = require('path')
 const https = require('https')
 
+const { promisify } = require('util')
+const async = require('async')
 const unzip = require('unzipper')
 const Encoding = require('encoding-japanese')
 const iconv = require('iconv-lite')
@@ -11,6 +13,8 @@ const csvParse = require('csv-parse/lib/sync')
 const cliProgress = require('cli-progress')
 const performance = require('perf_hooks').performance
 const kanji2number = require('@geolonia/japanese-numeral').kanji2number
+
+const sleep = promisify(setTimeout)
 
 const dataDir = path.join(path.dirname(path.dirname(__filename)), 'data')
 
@@ -32,6 +36,64 @@ const isjPostalMappings = [
     kana: 'イヌカミグンオオアザタガチョウ', rome: 'INUKAMI GUN OAZA TAGA CHO' },
   { pref: '福岡県', postal: '糟屋郡須惠町', isj: '糟屋郡須恵町' },
 ]
+
+const prefNames = [
+  '北海道',
+  '青森県',
+  '岩手県',
+  '宮城県',
+  '秋田県',
+  '山形県',
+  '福島県',
+  '茨城県',
+  '栃木県',
+  '群馬県',
+  '埼玉県',
+  '千葉県',
+  '東京都',
+  '神奈川県',
+  '新潟県',
+  '富山県',
+  '石川県',
+  '福井県',
+  '山梨県',
+  '長野県',
+  '岐阜県',
+  '静岡県',
+  '愛知県',
+  '三重県',
+  '滋賀県',
+  '京都府',
+  '大阪府',
+  '兵庫県',
+  '奈良県',
+  '和歌山県',
+  '鳥取県',
+  '島根県',
+  '岡山県',
+  '広島県',
+  '山口県',
+  '徳島県',
+  '香川県',
+  '愛媛県',
+  '高知県',
+  '福岡県',
+  '佐賀県',
+  '長崎県',
+  '熊本県',
+  '大分県',
+  '宮崎県',
+  '鹿児島県',
+  '沖縄県',
+]
+
+const toPrefCode = prefNumber => {
+  let prefCode = prefNumber.toString()
+  if (prefNumber < 10) {
+    prefCode = `0${prefCode}`
+  }
+  return prefCode
+}
 
 const han2zenMap = {
   ｶﾞ: 'ガ',
@@ -124,25 +186,20 @@ const han2zenMap = {
   '｣': '」',
   '･': '・',
 }
-const han2zen = str => {
-  let reg = new RegExp('(' + Object.keys(han2zenMap).join('|') + ')', 'g')
-  return str
-    .replace(reg, match => han2zenMap[match])
-}
+const HAN2ZEN_REGEXP = new RegExp('(' + Object.keys(han2zenMap).join('|') + ')', 'g')
+const han2zen = str => str.replace(HAN2ZEN_REGEXP, match => han2zenMap[match])
 
 const normalizePostalValue = text => {
   // return text
   return text.replace('　', '').trim()
 }
 
-const removeChome = text => {
-  const regexp = /[二三四五六七八九]?十?[一二三四五六七八九]?丁目?$/
-  return text.replace(regexp, '')
-}
+const REMOVE_CHOME_REGEX = /[二三四五六七八九]?十?[一二三四五六七八九]?丁目?$/
+const removeChome = text => text.replace(REMOVE_CHOME_REGEX, '')
 
+const GET_CHOME_NUMBER_REGEX = /([二三四五六七八九]?十?[一二三四五六七八九]?)丁目?$/
 const getChomeNumber = (text, suffix = '') => {
-  const regexp = /([二三四五六七八九]?十?[一二三四五六七八九]?)丁目?$/
-  const match = text.match(regexp)
+  const match = text.match(GET_CHOME_NUMBER_REGEX)
   if (match && match[1]) {
     return kanji2number(match[1]) + suffix
   } else {
@@ -150,9 +207,9 @@ const getChomeNumber = (text, suffix = '') => {
   }
 }
 
+const REMOVE_STRING_IN_PARENS_REGEX = /\(.+\)$/
 const removeStringEnclosedInParentheses = text => {
-  const regexp = /\(.+\)$/
-  return text.replace(regexp, '')
+  return text.replace(REMOVE_STRING_IN_PARENS_REGEX, '')
 }
 
 const getPostalKanaOrRomeItems = (
@@ -167,12 +224,14 @@ const getPostalKanaOrRomeItems = (
     ({ pref, isj }) => (pref === prefName && isj === cityName),
   )
 
+  const townNameChomeRemoved = removeChome(townName)
+
   if (postalAlt) {
     let postalRecord = postalCodeKanaOrRomeItems.find(
       item =>
         item['都道府県名'] === prefName &&
         item['市区町村名'] === postalAlt.postal &&
-        item['町域名'].indexOf(removeChome(townName)) === 0
+        item['町域名'].indexOf(townNameChomeRemoved) === 0
       ,
     )
 
@@ -201,7 +260,7 @@ const getPostalKanaOrRomeItems = (
       item =>
         item['都道府県名'] === prefName &&
         item['市区町村名'] === cityName &&
-        item['町域名'].indexOf(removeChome(townName)) === 0
+        item['町域名'].indexOf(townNameChomeRemoved) === 0
       ,
     )
 
@@ -316,9 +375,12 @@ const _downloadNlftpMlitFile = (prefCode, outPath, version) => new Promise((reso
         return
       }
       atLeastOneFile = true
+      const tmpOutPath = outPath + '.tmp'
       entry
-        .pipe(fs.createWriteStream(outPath))
+        .pipe(iconv.decodeStream('Shift_JIS'))
+        .pipe(fs.createWriteStream(tmpOutPath))
         .on('finish', () => {
+          fs.renameSync(tmpOutPath, outPath)
           resolve(outPath)
         })
     }).on('end', () => {
@@ -329,27 +391,17 @@ const _downloadNlftpMlitFile = (prefCode, outPath, version) => new Promise((reso
   })
 })
 
-const _convertEncoding = (inPath, outPath) => new Promise((resolve, reject) => {
-  fs.createReadStream(inPath)
-    .pipe(iconv.decodeStream('Shift_JIS'))
-    .pipe(fs.createWriteStream(outPath))
-    .on('finish', () => {
-      resolve(outPath)
-    })
-})
-
 // 位置参照情報(大字・町丁目レベル)から住所データを取得する
 const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems) => {
   const recordKeys = []
   const records = []
   const cityCodes = {}
 
-  const inPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}_sjis.csv`)
   const outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
 
-  if (!fs.existsSync(inPath) || !fs.existsSync(outPath)) {
-    await _downloadNlftpMlitFile(prefCode, inPath, '13.0b')
-    await _convertEncoding(inPath, outPath)
+  while (!fs.existsSync(outPath)) {
+    console.log(`${prefCode}: waiting for nlftp_mlit_130b_${prefCode}.csv...`)
+    await sleep(1000)
   }
 
   const text = await fs.promises.readFile(outPath)
@@ -362,7 +414,8 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
   const bar = new cliProgress.SingleBar()
   bar.start(data.length, 0)
 
-  for (let index = 0; index < data.length; index++) {
+  const dataLength = data.length
+  for (let index = 0; index < dataLength; index++) {
     const line = data[index]
 
     bar.update(index + 1)
@@ -414,7 +467,7 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
       .map(item =>
         item && typeof item === 'string' ? `"${item}"` : item,
       )
-      .join(',')
+      .join(',') + '\n'
 
     recordKeys.push(recordKey)
     records.push(record)
@@ -427,13 +480,13 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
 }
 
 // 位置参照情報(街区レベル)から住所データを取得する
-const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems, recordKeys, records, cityCodes) => {
-  const inPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}_sjis.csv`)
+const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems, recordKeys, cityCodes) => {
+  const records = []
   const outPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}.csv`)
 
-  if (!fs.existsSync(inPath) || !fs.existsSync(outPath)) {
-    await _downloadNlftpMlitFile(prefCode, inPath, '18.0a')
-    await _convertEncoding(inPath, outPath)
+  while (!fs.existsSync(outPath)) {
+    console.log(`${prefCode}: waiting for nlftp_mlit_180a_${prefCode}.csv...`)
+    await sleep(1000)
   }
 
   const text = await fs.promises.readFile(outPath)
@@ -448,7 +501,8 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
 
   let count = 0
 
-  for (let index = 0; index < data.length; index++) {
+  const dataLength = data.length
+  for (let index = 0; index < dataLength; index++) {
     const line = data[index]
 
     bar.update(index + 1)
@@ -503,7 +557,7 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
       .map(item =>
         item && typeof item === 'string' ? `"${item}"` : item,
       )
-      .join(',')
+      .join(',') + '\n'
 
     recordKeys.push(recordKey)
     records.push(record)
@@ -513,7 +567,7 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
 
   console.log(`${prefCode}: 街区レベル ${count}件`)
 
-  return { records }
+  return { records, recordKeys }
 }
 
 const getAddressItems = async (
@@ -525,30 +579,34 @@ const getAddressItems = async (
   let records = []
   let cityCodes = {}
 
-  await getOazaAddressItems(
-    prefCode,
-    postalCodeKanaItems,
-    postalCodeRomeItems,
-  ).then(data => {
-    recordKeys = data.recordKeys
-    records = data.records
-    cityCodes = data.cityCodes
-  }).catch(e => {
-    console.error(e)
-  })
+  const prefName = prefNames[parseInt(prefCode, 10) - 1]
+  const filteredPostalCodeKanaItems = postalCodeKanaItems.filter(
+    item => item['都道府県名'] === prefName,
+  )
+  const filteredPostalCodeRomeItems = postalCodeRomeItems.filter(
+    item => item['都道府県名'] === prefName,
+  )
 
-  await getGaikuAddressItems(
+  const oazaData = await getOazaAddressItems(
     prefCode,
-    postalCodeKanaItems,
-    postalCodeRomeItems,
+    filteredPostalCodeKanaItems,
+    filteredPostalCodeRomeItems,
+  )
+
+  recordKeys = oazaData.recordKeys
+  records = oazaData.records
+  cityCodes = oazaData.cityCodes
+
+  const gaikuData = await getGaikuAddressItems(
+    prefCode,
+    filteredPostalCodeKanaItems,
+    filteredPostalCodeRomeItems,
     recordKeys,
-    records,
-    cityCodes
-  ).then(data => {
-    records = data.records
-  }).catch(e => {
-    console.error(e)
-  })
+    cityCodes,
+  )
+
+  records = records.concat(gaikuData.records)
+  // recordKeys = recordKeys + gaikuData.recordKeys
 
   console.log(`${prefCode}: 街区レベル + 大字・町丁目レベル ${records.length - 1}件`)
 
@@ -556,7 +614,7 @@ const getAddressItems = async (
 }
 
 const main = async () => {
-  var t0 = performance.now();
+  const t0 = performance.now()
   process.stderr.write('郵便番号辞書のダウンロード中...')
   const [
     postalCodeKanaItems,
@@ -567,55 +625,70 @@ const main = async () => {
   ])
   process.stderr.write('done\n')
 
-  const finalOutput = [
-    [
-      '"都道府県コード"',
-      '"都道府県名"',
-      '"都道府県名カナ"',
-      '"都道府県名ローマ字"',
-      '"市区町村コード"',
-      '"市区町村名"',
-      '"市区町村名カナ"',
-      '"市区町村名ローマ字"',
-      '"大字町丁目名"',
-      '"大字町丁目名カナ"',
-      '"大字町丁目名ローマ字"'
-    ].join(','),
-  ]
-
-  const promises = []
-
   const prefCodeArray = process.argv[2] ? [process.argv[2]] : Array.from(Array(47), (v, k) => k + 1)
 
-  for (let i = 0; i < prefCodeArray.length; i++) {
-    let prefCode = prefCodeArray[i].toString()
-    if (prefCodeArray[i] < 10) {
-      prefCode = `0${prefCode}`
-    }
-    // process.stderr.write(`memoryUsed: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB\n`)
+  const download130bQueue = async.queue(async prefCode => {
+    const outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
 
-    const promise = getAddressItems(
+    if (!fs.existsSync(outPath)) {
+      await _downloadNlftpMlitFile(prefCode, outPath, '13.0b')
+    }
+  }, 1)
+
+  const download180aQueue = async.queue(async prefCode => {
+    const outPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}.csv`)
+
+    if (!fs.existsSync(outPath)) {
+      await _downloadNlftpMlitFile(prefCode, outPath, '18.0a')
+    }
+  }, 3)
+
+
+  prefCodeArray.forEach(prefNumber => {
+    const prefCode = toPrefCode(prefNumber)
+    download130bQueue.push(prefCode)
+    download180aQueue.push(prefCode)
+  })
+
+  const outfile = await fs.promises.open(path.join(dataDir, 'latest_v2.csv'), 'w')
+  const outfileWriterQueue = async.queue(async str => {
+    await outfile.write(str)
+  }, 1)
+
+  outfileWriterQueue.push([
+    '"都道府県コード"',
+    '"都道府県名"',
+    '"都道府県名カナ"',
+    '"都道府県名ローマ字"',
+    '"市区町村コード"',
+    '"市区町村名"',
+    '"市区町村名カナ"',
+    '"市区町村名ローマ字"',
+    '"大字町丁目名"',
+    '"大字町丁目名カナ"',
+    '"大字町丁目名ローマ字"',
+  ].join(',') + '\n')
+
+  for (let i = 0; i < prefCodeArray.length; i++) {
+    const prefCode = toPrefCode(prefCodeArray[i])
+
+    const tp0 = performance.now()
+    const data = await getAddressItems(
       prefCode,
       postalCodeKanaItems,
       postalCodeRomeItems,
-    ).then(data => {
-      finalOutput.push(...data.records)
-    })
+    )
+    const tp1 = performance.now()
+    console.log(`${prefCode}: build took ` + (tp1 - tp0) + ' milliseconds.')
 
-    if (process.env.CONCURRENCY === 'true') {
-      promises.push(promise)
-    } else {
-      await promise
-    }
+    outfileWriterQueue.push(data.records)
   } // pref loop
 
-  if (process.env.CONCURRENCY === 'true') {
-    await Promise.all(promises)
-  }
+  await outfileWriterQueue.drain()
+  await outfile.close()
 
-  await fs.promises.writeFile(path.join(dataDir, 'latest_v2.csv'), finalOutput.join('\n'))
-  var t1 = performance.now();
-  console.log("build.js took " + (t1 - t0) + " milliseconds.");
+  const t1 = performance.now()
+  console.log('build.js took ' + (t1 - t0) + ' milliseconds.')
 }
 
 try {
@@ -625,5 +698,8 @@ try {
 }
 
 if (require.main === module) {
-  main()
+  main().catch(error => {
+    console.error(error)
+    process.exit(1)
+  })
 }
