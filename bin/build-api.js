@@ -60,7 +60,7 @@ const main = async () => {
       if (!townJson[prefName][cityName]) {
         townJson[prefName][cityName] = []
       }
-      townJson[prefName][cityName].push(addresses[i].大字町丁目名)
+      townJson[prefName][cityName].push({'town': addresses[i].大字町丁目名, 'lat': addresses[i].緯度, 'lng': addresses[i].経度})
 
       fs.writeFileSync(`${basePath}/${prefName}/${cityName}.json`, JSON.stringify(townJson[prefName][cityName]));
     }

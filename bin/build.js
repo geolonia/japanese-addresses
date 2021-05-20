@@ -463,6 +463,8 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
       postalCodeRomeItem
         ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + (getChomeNumber(line['大字町丁目名']) !== '' ? ` ${getChomeNumber(line['大字町丁目名'])}` : '')
         : '',
+      line['緯度'],
+      line['経度']
     ]
       .map(item =>
         item && typeof item === 'string' ? `"${item}"` : item,
@@ -553,6 +555,8 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
       postalCodeRomeItem
         ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + (getChomeNumber(townName) !== '' ? ` ${getChomeNumber(townName)}` : '')
         : '',
+      line['緯度'],
+      line['経度']
     ]
       .map(item =>
         item && typeof item === 'string' ? `"${item}"` : item,
@@ -667,6 +671,8 @@ const main = async () => {
     '"大字町丁目名"',
     '"大字町丁目名カナ"',
     '"大字町丁目名ローマ字"',
+    '"緯度"',
+    '"経度"'
   ].join(',') + '\n')
 
   for (let i = 0; i < prefCodeArray.length; i++) {
