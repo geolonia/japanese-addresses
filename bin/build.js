@@ -13,6 +13,9 @@ const csvParse = require('csv-parse/lib/sync')
 const cliProgress = require('cli-progress')
 const performance = require('perf_hooks').performance
 const kanji2number = require('@geolonia/japanese-numeral').kanji2number
+const turfCenter = require('@turf/center').default
+const turfNearestPoint = require('@turf/nearest-point').default
+const { featureCollection, point } = require('@turf/helpers');
 
 const sleep = promisify(setTimeout)
 
@@ -480,6 +483,27 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
   return { records, cityCodes }
 }
 
+// 経度・緯度
+let coords = {}
+const addToCoords = (recordKey, lng, lat) => {
+  if (coords[recordKey] === undefined) {
+    coords[recordKey] = [[Number(lng), Number(lat)]]
+  } else {
+    coords[recordKey].push([Number(lng), Number(lat)])
+  }
+}
+
+const getCenter = (recordKey) => {
+  const arr = coords[recordKey]
+  const features = featureCollection(
+    arr.map(c => point(c))
+  )
+
+  // 各地点を囲む最小の長方形（bounding box）を作り、その中心に一番近い地点を返す。
+  // Ref. https://turfjs.org/docs/#center, https://turfjs.org/docs/#nearestPoint
+  return turfNearestPoint(turfCenter(features), features)
+}
+
 // 位置参照情報(街区レベル)から住所データを取得する
 const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems, records, cityCodes) => {
   const outPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}.csv`)
@@ -498,6 +522,19 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
 
   const bar = new cliProgress.SingleBar()
   bar.start(data.length, 0)
+
+  // 緯度・経度をいったん全部coordsに格納する
+  for (let index = 0; index < data.length; index++) {
+    const line = data[index]
+    const renameEntry =
+      isjRenames.find(
+        ({ pref, orig }) =>
+          (pref === line['都道府県名'] &&
+            orig === line['市区町村名']))
+    const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
+    const recordKey = line['都道府県名'] + cityName + line['大字・丁目名'] + line['小字・通称名']
+    addToCoords(recordKey, line['経度'], line['緯度'])
+　}
 
   let count = 0
 
@@ -529,6 +566,7 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
       line['都道府県名'], cityName, townName, postalCodeRomeItems, '市区町村名ローマ字', 'rome',
     )
 
+    const center = getCenter(recordKey)
     const record = [
       prefCode,
       line['都道府県名'],
@@ -554,8 +592,8 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
         ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + (getChomeNumber(townName) !== '' ? ` ${getChomeNumber(townName)}` : '')
         : '',
       line['小字・通称名'],
-      line['緯度'],
-      line['経度']
+      String(center.geometry.coordinates[1]),
+      String(center.geometry.coordinates[0])
     ]
       .map(item =>
         item && typeof item === 'string' ? `"${item}"` : item,
@@ -601,9 +639,9 @@ const getAddressItems = async (
     oazaData.cityCodes
   )
 
-  console.log(`${prefCode}: 街区レベル + 大字・町丁目レベル ${Object.values(records).length}件`)
-
   records = gaikuData.records
+
+  console.log(`${prefCode}: 街区レベル + 大字・町丁目レベル ${Object.values(records).length}件`)
 
   return { records }
 }
