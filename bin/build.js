@@ -13,6 +13,9 @@ const csvParse = require('csv-parse/lib/sync')
 const cliProgress = require('cli-progress')
 const performance = require('perf_hooks').performance
 const kanji2number = require('@geolonia/japanese-numeral').kanji2number
+const turfCenter = require('@turf/center').default
+const turfNearestPoint = require('@turf/nearest-point').default
+const { featureCollection, point } = require('@turf/helpers');
 
 const sleep = promisify(setTimeout)
 
@@ -393,8 +396,7 @@ const _downloadNlftpMlitFile = (prefCode, outPath, version) => new Promise((reso
 
 // 位置参照情報(大字・町丁目レベル)から住所データを取得する
 const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems) => {
-  const recordKeys = []
-  const records = []
+  const records = {}
   const cityCodes = {}
 
   const outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
@@ -463,6 +465,7 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
       postalCodeRomeItem
         ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + (getChomeNumber(line['大字町丁目名']) !== '' ? ` ${getChomeNumber(line['大字町丁目名'])}` : '')
         : '',
+      '',
       line['緯度'],
       line['経度']
     ]
@@ -471,19 +474,38 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
       )
       .join(',') + '\n'
 
-    recordKeys.push(recordKey)
-    records.push(record)
+    records[recordKey] = record
   } // line iteration
   bar.stop()
 
-  console.log(`${prefCode}: 大字・町丁目レベル ${records.length - 1}件`)
+  console.log(`${prefCode}: 大字・町丁目レベル ${Object.values(records).length}件`)
 
-  return { recordKeys, records, cityCodes }
+  return { records, cityCodes }
+}
+
+// 経度・緯度
+let coords = {}
+const addToCoords = (recordKey, lng, lat) => {
+  if (coords[recordKey] === undefined) {
+    coords[recordKey] = [[Number(lng), Number(lat)]]
+  } else {
+    coords[recordKey].push([Number(lng), Number(lat)])
+  }
+}
+
+const getCenter = (recordKey) => {
+  const arr = coords[recordKey]
+  const features = featureCollection(
+    arr.map(c => point(c))
+  )
+
+  // 各地点を囲む最小の長方形（bounding box）を作り、その中心に一番近い地点を返す。
+  // Ref. https://turfjs.org/docs/#center, https://turfjs.org/docs/#nearestPoint
+  return turfNearestPoint(turfCenter(features), features)
 }
 
 // 位置参照情報(街区レベル)から住所データを取得する
-const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems, recordKeys, cityCodes) => {
-  const records = []
+const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems, records, cityCodes) => {
   const outPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}.csv`)
 
   while (!fs.existsSync(outPath)) {
@@ -501,6 +523,19 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
   const bar = new cliProgress.SingleBar()
   bar.start(data.length, 0)
 
+  // 緯度・経度をいったん全部coordsに格納する
+  for (let index = 0; index < data.length; index++) {
+    const line = data[index]
+    const renameEntry =
+      isjRenames.find(
+        ({ pref, orig }) =>
+          (pref === line['都道府県名'] &&
+            orig === line['市区町村名']))
+    const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
+    const recordKey = line['都道府県名'] + cityName + line['大字・丁目名'] + line['小字・通称名']
+    addToCoords(recordKey, line['経度'], line['緯度'])
+　}
+
   let count = 0
 
   const dataLength = data.length
@@ -516,14 +551,14 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
             orig === line['市区町村名']))
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
 
-    const recordKey = line['都道府県名'] + cityName + line['大字・丁目名']
+    const recordKey = line['都道府県名'] + cityName + line['大字・丁目名'] + line['小字・通称名']
 
     // to avoid duplication
-    if (recordKeys.includes(recordKey)) {
+    if (records[recordKey]) {
       continue
     }
 
-    const townName = line['大字・丁目名'] + line['小字・通称名']
+    const townName = line['大字・丁目名']
     const postalCodeKanaItem = getPostalKanaOrRomeItems(
       line['都道府県名'], cityName, townName, postalCodeKanaItems, '市区町村名カナ', 'kana',
     )
@@ -531,6 +566,7 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
       line['都道府県名'], cityName, townName, postalCodeRomeItems, '市区町村名ローマ字', 'rome',
     )
 
+    const center = getCenter(recordKey)
     const record = [
       prefCode,
       line['都道府県名'],
@@ -555,23 +591,23 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
       postalCodeRomeItem
         ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + (getChomeNumber(townName) !== '' ? ` ${getChomeNumber(townName)}` : '')
         : '',
-      line['緯度'],
-      line['経度']
+      line['小字・通称名'],
+      String(center.geometry.coordinates[1]),
+      String(center.geometry.coordinates[0])
     ]
       .map(item =>
         item && typeof item === 'string' ? `"${item}"` : item,
       )
       .join(',') + '\n'
 
-    recordKeys.push(recordKey)
-    records.push(record)
+    records[recordKey] = record
     count++
   } // line iteration
   bar.stop()
 
   console.log(`${prefCode}: 街区レベル ${count}件`)
 
-  return { records, recordKeys }
+  return { records }
 }
 
 const getAddressItems = async (
@@ -579,9 +615,7 @@ const getAddressItems = async (
   postalCodeKanaItems,
   postalCodeRomeItems,
 ) => {
-  let recordKeys = []
-  let records = []
-  let cityCodes = {}
+  let records = {}
 
   const prefName = prefNames[parseInt(prefCode, 10) - 1]
   const filteredPostalCodeKanaItems = postalCodeKanaItems.filter(
@@ -597,22 +631,17 @@ const getAddressItems = async (
     filteredPostalCodeRomeItems,
   )
 
-  recordKeys = oazaData.recordKeys
-  records = oazaData.records
-  cityCodes = oazaData.cityCodes
-
   const gaikuData = await getGaikuAddressItems(
     prefCode,
     filteredPostalCodeKanaItems,
     filteredPostalCodeRomeItems,
-    recordKeys,
-    cityCodes,
+    oazaData.records,
+    oazaData.cityCodes
   )
 
-  records = records.concat(gaikuData.records)
-  // recordKeys = recordKeys + gaikuData.recordKeys
+  records = gaikuData.records
 
-  console.log(`${prefCode}: 街区レベル + 大字・町丁目レベル ${records.length - 1}件`)
+  console.log(`${prefCode}: 街区レベル + 大字・町丁目レベル ${Object.values(records).length}件`)
 
   return { records }
 }
@@ -671,6 +700,7 @@ const main = async () => {
     '"大字町丁目名"',
     '"大字町丁目名カナ"',
     '"大字町丁目名ローマ字"',
+    '"小字・通称名"',
     '"緯度"',
     '"経度"'
   ].join(',') + '\n')
@@ -687,7 +717,7 @@ const main = async () => {
     const tp1 = performance.now()
     console.log(`${prefCode}: build took ` + (tp1 - tp0) + ' milliseconds.')
 
-    outfileWriterQueue.push(data.records)
+    outfileWriterQueue.push(Object.values(data.records))
   } // pref loop
 
   await outfileWriterQueue.drain()
