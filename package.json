@@ -17,6 +17,8 @@
   },
   "dependencies": {
     "@geolonia/japanese-numeral": "^0.1.14",
+    "@turf/center": "^6.3.0",
+    "@turf/nearest-point": "^6.3.0",
     "async": "^3.2.0",
     "cli-progress": "^3.8.2",
     "csv-parse": "^4.15.3",
