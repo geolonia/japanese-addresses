@@ -363,6 +363,7 @@ const downloadPostalCodeRome = async () => {
   }).map(item => ({
     ...item,
     市区町村名: normalizePostalValue(item['市区町村名']),
+    町域名: normalizePostalValue(item['町域名']),
   }))
   return json
 }
