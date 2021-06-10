@@ -7,7 +7,18 @@ on:
       - "!*"
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: mkdir data || true
+      - run: npm install
+      - name: Build Nagano data only
+        run: node bin/build.js 20
+      - name: Test
+        run: npx mocha
   deploy-staging-api:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
