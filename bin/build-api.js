@@ -6,7 +6,7 @@ const path = require('path')
 
 const main = async () => {
   mkdirp.sync(basePath);
-  const content = fs.readFileSync(`${__dirname}/../data/latest_v2.csv`, 'utf-8');
+  const content = fs.readFileSync(`${__dirname}/../data/latest.csv`, 'utf-8');
 
   const addresses = JSON.parse(fs.readFileSync(`${__dirname}/../data/patch.json`, 'utf8'));
 

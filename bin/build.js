@@ -684,7 +684,7 @@ const main = async () => {
     download180aQueue.push(prefCode)
   })
 
-  const outfile = await fs.promises.open(path.join(dataDir, 'latest_v2.csv'), 'w')
+  const outfile = await fs.promises.open(path.join(dataDir, 'latest.csv'), 'w')
   const outfileWriterQueue = async.queue(async str => {
     await outfile.write(str)
   }, 1)
