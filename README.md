@@ -4,7 +4,7 @@
 
 本データは、国土交通省位置参照情報ダウンロードサービスで配布されている「大字・町丁目レベル位置参照情報」をベースとしていますが、「大字・町丁目レベル位置参照情報」データは年に一回更新であるのに対して、本リポジトリで配布するデータは毎月更新しています。
 
-[ダウンロード](https://raw.githubusercontent.com/geolonia/japanese-addresses/master/data/latest_v2.csv)
+[ダウンロード](https://raw.githubusercontent.com/geolonia/japanese-addresses/master/data/latest.csv)
 
 ## 住所データ仕様
 
@@ -22,8 +22,10 @@ CSV
 * 市区町村名
 * 市区町村名カナ
 * 市区町村名ローマ字
-* 大字町丁目コード
 * 大字町丁目名
+* 大字町丁目名カナ
+* 大字町丁目名ローマ字
+* 小字・通称名
 * 緯度（代表点）
 * 経度（代表点）
 
@@ -69,21 +71,36 @@ https://geolonia.github.io/japanese-addresses/api/ja/<都道府県名>/<市区�
 
 ※ 都道府県名及び市区町村名は URL エンコードを行ってください。
 
-例: [https://geolonia.github.io/japanese-addresses/api/ja/%E5%8C%97%E6%B5%B7%E9%81%93/%E6%9C%AD%E5%B9%8C%E5%B8%82%E4%B8%AD%E5%A4%AE%E5%8C%BA.json](https://geolonia.github.io/japanese-addresses/api/ja/%E5%8C%97%E6%B5%B7%E9%81%93/%E6%9C%AD%E5%B9%8C%E5%B8%82%E4%B8%AD%E5%A4%AE%E5%8C%BA.json)
+例: [https://geolonia.github.io/japanese-addresses/api/ja/%E9%95%B7%E9%87%8E%E7%9C%8C/%E9%95%B7%E9%87%8E%E5%B8%82.json](https://geolonia.github.io/japanese-addresses/api/ja/%E9%95%B7%E9%87%8E%E7%9C%8C/%E9%95%B7%E9%87%8E%E5%B8%82.json)
 
 ```
 [
-  "旭ケ丘一丁目",
-  "旭ケ丘二丁目",
-  "旭ケ丘三丁目",
-  "旭ケ丘四丁目",
-  "旭ケ丘五丁目",
-  "旭ケ丘六丁目",
-  "大通西十丁目",
-  "大通西十一丁目",
   ...
+  {
+    "town": "篠ノ井塩崎",
+    "koaza": "四之宮",
+    "lat": "36.555444",
+    "lng": "138.10524"
+  },
+  {
+    "town": "篠ノ井塩崎",
+    "koaza": "越",
+    "lat": "36.544766",
+    "lng": "138.104657"
+  },
+  {
+    "town": "篠ノ井塩崎",
+    "koaza": "長谷",
+    "lat": "36.548163",
+    "lng": "138.101997"
+  },
+  {
+    "town": "篠ノ井塩崎",
+    "koaza": "明戸",
+    "lat": "36.549686",
+    "lng": "138.106612"
+  },
   ...
-]
 ```
 
 ### 小字まで含んだ住所の代表点（緯度、経度）の決め方
