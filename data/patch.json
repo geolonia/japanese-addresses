@@ -579,5 +579,81 @@
       "http://www.city.mobara.chiba.jp/0000005403.html"
     ],
     "更新日": "2021/05/06"
+  },
+  {
+    "都道府県コード": "14",
+    "都道府県名": "神奈川県",
+    "都道府県名カナ": "カナガワケン",
+    "都道府県名ローマ字": "KANAGAWA KEN",
+    "市区町村コード": "14106",
+    "市区町村名": "横浜市保土ケ谷区",
+    "市区町村名カナ": "ヨコハマシホドガヤク",
+    "市区町村名ローマ字": "YOKOHAMA SHI HODOGAYA KU",
+    "大字町丁目名": "西谷一丁目",
+    "大字町丁目名カナ": "ニシヤ 1",
+    "大字町丁目名ローマ字": "NISHIYA 1",
+    "緯度": null,
+    "経度": null,
+    "参照": [
+      "https://www.city.yokohama.lg.jp/kurashi/koseki-zei-hoken/todokede/jukyo/kako/jisshi-r2.html"
+    ],
+    "更新日": "2021/07/08"
+  },
+  {
+    "都道府県コード": "14",
+    "都道府県名": "神奈川県",
+    "都道府県名カナ": "カナガワケン",
+    "都道府県名ローマ字": "KANAGAWA KEN",
+    "市区町村コード": "14106",
+    "市区町村名": "横浜市保土ケ谷区",
+    "市区町村名カナ": "ヨコハマシホドガヤク",
+    "市区町村名ローマ字": "YOKOHAMA SHI HODOGAYA KU",
+    "大字町丁目名": "西谷二丁目",
+    "大字町丁目名カナ": "ニシヤ 2",
+    "大字町丁目名ローマ字": "NISHIYA 2",
+    "緯度": null,
+    "経度": null,
+    "参照": [
+      "https://www.city.yokohama.lg.jp/kurashi/koseki-zei-hoken/todokede/jukyo/kako/jisshi-r2.html"
+    ],
+    "更新日": "2021/07/08"
+  },
+  {
+    "都道府県コード": "14",
+    "都道府県名": "神奈川県",
+    "都道府県名カナ": "カナガワケン",
+    "都道府県名ローマ字": "KANAGAWA KEN",
+    "市区町村コード": "14106",
+    "市区町村名": "横浜市保土ケ谷区",
+    "市区町村名カナ": "ヨコハマシホドガヤク",
+    "市区町村名ローマ字": "YOKOHAMA SHI HODOGAYA KU",
+    "大字町丁目名": "西谷三丁目",
+    "大字町丁目名カナ": "ニシヤ 3",
+    "大字町丁目名ローマ字": "NISHIYA 3",
+    "緯度": null,
+    "経度": null,
+    "参照": [
+      "https://www.city.yokohama.lg.jp/kurashi/koseki-zei-hoken/todokede/jukyo/kako/jisshi-r2.html"
+    ],
+    "更新日": "2021/07/08"
+  },
+  {
+    "都道府県コード": "14",
+    "都道府県名": "神奈川県",
+    "都道府県名カナ": "カナガワケン",
+    "都道府県名ローマ字": "KANAGAWA KEN",
+    "市区町村コード": "14106",
+    "市区町村名": "横浜市保土ケ谷区",
+    "市区町村名カナ": "ヨコハマシホドガヤク",
+    "市区町村名ローマ字": "YOKOHAMA SHI HODOGAYA KU",
+    "大字町丁目名": "西谷四丁目",
+    "大字町丁目名カナ": "ニシヤ 4",
+    "大字町丁目名ローマ字": "NISHIYA 4",
+    "緯度": null,
+    "経度": null,
+    "参照": [
+      "https://www.city.yokohama.lg.jp/kurashi/koseki-zei-hoken/todokede/jukyo/kako/jisshi-r2.html"
+    ],
+    "更新日": "2021/07/08"
   }
 ]
