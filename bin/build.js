@@ -467,8 +467,8 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
         ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + (getChomeNumber(line['大字町丁目名']) !== '' ? ` ${getChomeNumber(line['大字町丁目名'])}` : '')
         : '',
       '',
-      line['緯度'],
-      line['経度']
+      Number(line['緯度']),
+      Number(line['経度'])
     ]
       .map(item =>
         item && typeof item === 'string' ? `"${item}"` : item,
@@ -488,9 +488,9 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
 let coords = {}
 const addToCoords = (recordKey, lng, lat) => {
   if (coords[recordKey] === undefined) {
-    coords[recordKey] = [[Number(lng), Number(lat)]]
+    coords[recordKey] = [[lng, lat]]
   } else {
-    coords[recordKey].push([Number(lng), Number(lat)])
+    coords[recordKey].push([lng, lat])
   }
 }
 
@@ -534,7 +534,7 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
             orig === line['市区町村名']))
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
     const recordKey = line['都道府県名'] + cityName + line['大字・丁目名'] + line['小字・通称名']
-    addToCoords(recordKey, line['経度'], line['緯度'])
+    addToCoords(recordKey, Number(line['経度']), Number(line['緯度']))
 　}
 
   let count = 0

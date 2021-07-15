@@ -15,11 +15,11 @@ describe('latest.csvのテスト', () => {
 
   it('一行目のデータを確認する', () => {
     data = lines.shift()
-    expect(data).to.equal('"20","長野県","ナガノケン","NAGANO KEN","20201","長野市","ナガノシ","NAGANO SHI","青木島二丁目","アオキジマ 2","AOKIJIMA 2",,"36.617509","138.181480"')
+    expect(data).to.equal('"20","長野県","ナガノケン","NAGANO KEN","20201","長野市","ナガノシ","NAGANO SHI","青木島二丁目","アオキジマ 2","AOKIJIMA 2",,36.617509,138.18148')
   })
 
   it('大字のローマ字を取得できる', () => {
     data = lines[150]
-    expect(data).to.equal('"20","長野県","ナガノケン","NAGANO KEN","20201","長野市","ナガノシ","NAGANO SHI","篠ノ井塩崎","シノノイシオザキ","SHINONOI SHIOZAKI",,"36.552969","138.109935"')
+    expect(data).to.equal('"20","長野県","ナガノケン","NAGANO KEN","20201","長野市","ナガノシ","NAGANO SHI","篠ノ井塩崎","シノノイシオザキ","SHINONOI SHIOZAKI",,36.552969,138.109935')
   })
 })
