@@ -593,8 +593,8 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
         ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + (getChomeNumber(townName) !== '' ? ` ${getChomeNumber(townName)}` : '')
         : '',
       line['小字・通称名'],
-      String(center.geometry.coordinates[1]),
-      String(center.geometry.coordinates[0])
+      Number(center.geometry.coordinates[1]),
+      Number(center.geometry.coordinates[0])
     ]
       .map(item =>
         item && typeof item === 'string' ? `"${item}"` : item,
