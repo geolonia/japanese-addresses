@@ -533,7 +533,8 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
           (pref === line['都道府県名'] &&
             orig === line['市区町村名']))
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
-    const recordKey = line['都道府県名'] + cityName + line['大字・丁目名'] + line['小字・通称名']
+    const koazaName = line['小字・通称名'] === 'NULL' ? '' : line['小字・通称名']
+    const recordKey = line['都道府県名'] + cityName + line['大字・丁目名'] + koazaName
     addToCoords(recordKey, Number(line['経度']), Number(line['緯度']))
 　}
 
@@ -551,9 +552,9 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
           (pref === line['都道府県名'] &&
             orig === line['市区町村名']))
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
-
-    const recordKey = line['都道府県名'] + cityName + line['大字・丁目名'] + line['小字・通称名']
-
+    const koazaName = line['小字・通称名'] === 'NULL' ? '' : line['小字・通称名']
+    const recordKey = line['都道府県名'] + cityName + line['大字・丁目名'] + koazaName
+    
     // to avoid duplication
     if (records[recordKey]) {
       continue
@@ -592,7 +593,7 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
       postalCodeRomeItem
         ? removeStringEnclosedInParentheses(postalCodeRomeItem['町域名ローマ字']) + (getChomeNumber(townName) !== '' ? ` ${getChomeNumber(townName)}` : '')
         : '',
-      line['小字・通称名'],
+      koazaName,
       Number(center.geometry.coordinates[1]),
       Number(center.geometry.coordinates[0])
     ]
