@@ -441,7 +441,16 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
       cityCodes[cityName] = line['市区町村コード']
     }
 
-    const recordKey = line['都道府県名'] + cityName + line['大字町丁目名']
+    // 重複チェックに使用するためのキーには、「大字」または「字」を含めない。
+    const oazaKey = line['大字町丁目名'].replace(/^大?字/g, '')
+    
+    const recordKey = line['都道府県名'] + cityName + oazaKey
+
+    // to avoid duplication
+    if (records[recordKey]) {
+      continue
+    }
+
     const record = [
       prefCode,
       line['都道府県名'],
@@ -533,8 +542,12 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
           (pref === line['都道府県名'] &&
             orig === line['市区町村名']))
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
+
+    // 重複チェックに使用するためのキーには、「大字」または「字」を含めない。
+    const oazaKey = line['大字・丁目名'].replace(/^大?字/g, '')
+
     const koazaName = line['小字・通称名'] === 'NULL' ? '' : line['小字・通称名']
-    const recordKey = line['都道府県名'] + cityName + line['大字・丁目名'] + koazaName
+    const recordKey = line['都道府県名'] + cityName + oazaKey + koazaName
     addToCoords(recordKey, Number(line['経度']), Number(line['緯度']))
 　}
 
@@ -552,8 +565,12 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
           (pref === line['都道府県名'] &&
             orig === line['市区町村名']))
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
+
+    // 重複チェックに使用するためのキーには、「大字」または「字」を含めない。
+    const oazaKey = line['大字・丁目名'].replace(/^大?字/g, '')
+    
     const koazaName = line['小字・通称名'] === 'NULL' ? '' : line['小字・通称名']
-    const recordKey = line['都道府県名'] + cityName + line['大字・丁目名'] + koazaName
+    const recordKey = line['都道府県名'] + cityName + oazaKey + koazaName
     
     // to avoid duplication
     if (records[recordKey]) {
