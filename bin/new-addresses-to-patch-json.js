@@ -39,7 +39,7 @@ const constructAddresses = (address, matchedData) => {
   let match
 
   // 「宮城県石巻市湊西（みなとにし）１～３丁目」または「茨城県筑西市岡芹（おかぜり）１・２丁目」のような住所
-  if (match = zenkaku2hankaku(oazaChochomoku).match(/(.+)(\d+)([～・])(\d+)丁目/)) {
+  if (match = zenkaku2hankaku(oazaChochomoku).match(/(.+?)(\d+)([～・])(\d+)丁目/)) {
     const start = parseInt(match[2])
     const end = parseInt(match[4])
 
@@ -64,7 +64,7 @@ const constructAddresses = (address, matchedData) => {
       })
     }
   // 「東京都国立市谷保（やほ）４丁目」のような住所
-  } else if (match = zenkaku2hankaku(oazaChochomoku).match(/(.+)(\d+)丁目/)) {
+  } else if (match = zenkaku2hankaku(oazaChochomoku).match(/(.+?)(\d+)丁目/)) {
     patches.push({
       '都道府県コード': matchedData[0],
       '都道府県名': matchedData[1],
