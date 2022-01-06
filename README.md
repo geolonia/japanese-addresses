@@ -131,6 +131,10 @@ https://geolonia.github.io/japanese-addresses/api/ja/<都道府県名>/<市区�
 
 * 本データに不具合がある場合には、[Issue](https://github.com/geolonia/japanese-addresses/issues) または[プルリクエスト](https://github.com/geolonia/japanese-addresses/pulls)にてご報告ください。
 
+## japanese-addressesを使っているプロジェクト
+
+* [JapaneseAddressParser](https://github.com/yamat47/japanese_address_parser) 日本の住所をパースすることができる Ruby gem
+
 ## スポンサー
 
 * [一般社団法人 不動産テック協会](https://retechjapan.org/)
