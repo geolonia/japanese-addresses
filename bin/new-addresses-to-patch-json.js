@@ -7,6 +7,7 @@ const { normalize } = require('@geolonia/normalize-japanese-addresses')
 const number2kanji = require('@geolonia/japanese-numeral').number2kanji
 const Romanizer = require('js-hira-kata-romanize')
 const r = new Romanizer({chouon: Romanizer.CHOUON_SKIP, upper: Romanizer.UPPER_ALL})
+const NEW_ADDRESSES_URL = 'https://www.kokudo.or.jp/place/index.html'
 
 const zenkaku2hankaku = (str) => {
   return str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, (s) => {
@@ -115,7 +116,7 @@ const main = async () => {
   const latestData = csvSync(fs.readFileSync(`${__dirname}/../data/latest.csv`, 'utf-8'));
 
   // 地名変更情報ページにあるtableの各セルを取得する
-  const elements = httpcli.fetchSync('https://www.kokudo.or.jp/place/index.html').$('table.place-table td')
+  const elements = httpcli.fetchSync(NEW_ADDRESSES_URL).$('table.place-table td')
   
   for (let i = 0; i < elements.length; i++) {
     // 住所・地名のみを処理する
