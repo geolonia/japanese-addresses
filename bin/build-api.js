@@ -11,9 +11,7 @@ const main = async () => {
   const content = fs.readFileSync(`${__dirname}/../data/latest.csv`, 'utf-8');
 
   let addresses = []
-  fs.readdirSync(PATCHES_PATH).map(fileName => {
-    addresses = addresses.concat(JSON.parse(fs.readFileSync(path.join(PATCHES_PATH, fileName), 'utf8')));
-  })
+  let addressKeys = []
 
   const parser = parse(content, { delimiter: "," });
 
@@ -32,6 +30,7 @@ const main = async () => {
       }
 
       addresses.push(item)
+      addressKeys.push(`${item.都道府県名}${item.市区町村名}${item.大字町丁目名}`)
     }
   });
 
@@ -41,6 +40,17 @@ const main = async () => {
   });
 
   parser.on("end", () => {
+
+    // patches以下の住所情報を追加
+    let patches = []
+    fs.readdirSync(PATCHES_PATH).map(fileName => {
+      patches = patches.concat(JSON.parse(fs.readFileSync(path.join(PATCHES_PATH, fileName), 'utf8')));
+    })
+    patches.forEach(patch => {
+      if (!addressKeys.includes(`${patch.都道府県名}${patch.市区町村名}${patch.大字町丁目名}`)) {
+        addresses.push(patch)
+      }
+    });
 
     // 都道府県名および市区町村名用のJSON
     const _prefJson = {}
