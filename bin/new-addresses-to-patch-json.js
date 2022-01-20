@@ -7,7 +7,7 @@ const { normalize } = require('@geolonia/normalize-japanese-addresses')
 const number2kanji = require('@geolonia/japanese-numeral').number2kanji
 const Romanizer = require('js-hira-kata-romanize')
 const r = new Romanizer({chouon: Romanizer.CHOUON_SKIP, upper: Romanizer.UPPER_ALL})
-const NEW_ADDRESSES_URL = 'https://www.kokudo.or.jp/place/index.html'
+const NEW_ADDRESSES_URL = 'https://kokudo.or.jp/place/pl2021_7.html'
 
 const zenkaku2hankaku = (str) => {
   return str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, (s) => {
