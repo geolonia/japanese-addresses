@@ -27,4 +27,9 @@ describe('latest.csvのテスト', () => {
     data = lines[2245]
     expect(data).to.equal('"20","長野県","ナガノケン","NAGANO KEN","20201","長野市","ナガノシ","NAGANO SHI","篠ノ井塩崎","シノノイシオザキ","SHINONOI SHIOZAKI","四之宮",36.555444,138.10524')
   })
+
+  it('大字町丁名データの全角スペースを削除する', () => {
+    data = lines[24485]
+    expect(data).to.equal('"01","北海道","ホッカイドウ","HOKKAIDO","01632","河東郡士幌町","カトウグンシホロチョウ","KATO GUN SHIHORO CHO","字士幌仲通",,,,43.168944,143.246195')
+  })
 })
