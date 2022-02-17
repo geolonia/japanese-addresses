@@ -12,6 +12,6 @@ jobs:
       - run: mkdir data || true
       - run: npm install
       - name: Build Nagano data only
-        run: node bin/build.js 20
+        run: node bin/build.js 20,1
       - name: Test
         run: npx mocha

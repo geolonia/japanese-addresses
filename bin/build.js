@@ -192,8 +192,7 @@ const han2zenMap = {
 const HAN2ZEN_REGEXP = new RegExp('(' + Object.keys(han2zenMap).join('|') + ')', 'g')
 const han2zen = str => str.replace(HAN2ZEN_REGEXP, match => han2zenMap[match])
 
-const normalizePostalValue = text => {
-  // return text
+const removeUnnecessarySpace = text => {
   return text.replace('　', '').trim()
 }
 
@@ -331,7 +330,7 @@ const downloadPostalCodeKana = async () => {
     ],
   }).map(item => ({
     ...item,
-    市区町村名: normalizePostalValue(item['市区町村名']),
+    市区町村名: removeUnnecessarySpace(item['市区町村名']),
   }))
   return json
 }
@@ -362,8 +361,8 @@ const downloadPostalCodeRome = async () => {
     ],
   }).map(item => ({
     ...item,
-    市区町村名: normalizePostalValue(item['市区町村名']),
-    町域名: normalizePostalValue(item['町域名']),
+    市区町村名: removeUnnecessarySpace(item['市区町村名']),
+    町域名: removeUnnecessarySpace(item['町域名']),
   }))
   return json
 }
@@ -430,11 +429,13 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
             orig === line['市区町村名']))
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
 
+    const townName = removeUnnecessarySpace(line['大字町丁目名'])
+
     const postalCodeKanaItem = getPostalKanaOrRomeItems(
-      line['都道府県名'], cityName, line['大字町丁目名'], postalCodeKanaItems, '市区町村名カナ', 'kana',
+      line['都道府県名'], cityName, townName, postalCodeKanaItems, '市区町村名カナ', 'kana',
     )
     const postalCodeRomeItem = getPostalKanaOrRomeItems(
-      line['都道府県名'], cityName, line['大字町丁目名'], postalCodeRomeItems, '市区町村名ローマ字', 'rome',
+      line['都道府県名'], cityName, townName, postalCodeRomeItems, '市区町村名ローマ字', 'rome',
     )
 
     if (!cityCodes[cityName]) {
@@ -442,7 +443,7 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
     }
 
     // 重複チェックに使用するためのキーには、「大字」または「字」を含めない。
-    const oazaKey = line['大字町丁目名'].replace(/^大?字/g, '')
+    const oazaKey = townName.replace(/^大?字/g, '')
     
     const recordKey = line['都道府県名'] + cityName + oazaKey
 
@@ -468,7 +469,7 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
       postalCodeRomeItem
         ? postalCodeRomeItem['市区町村名ローマ字']
         : '',
-      line['大字町丁目名'],
+      townName,
       postalCodeKanaItem
         ? han2zen(removeStringEnclosedInParentheses(postalCodeKanaItem['町域名カナ'])) + (getChomeNumber(line['大字町丁目名']) !== '' ? ` ${getChomeNumber(line['大字町丁目名'])}` : '')
         : '',
@@ -544,12 +545,13 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
 
     // 重複チェックに使用するためのキーには、「大字」または「字」を含めない。
-    const oazaKey = line['大字・丁目名'].replace(/^大?字/g, '')
+    const townName = removeUnnecessarySpace(line['大字・丁目名'])
+    const oazaKey = townName.replace(/^大?字/g, '')
 
     const koazaName = line['小字・通称名'] === 'NULL' ? '' : line['小字・通称名']
     const recordKey = line['都道府県名'] + cityName + oazaKey + koazaName
     addToCoords(recordKey, Number(line['経度']), Number(line['緯度']))
-　}
+  }
 
   let count = 0
 
@@ -566,8 +568,10 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
             orig === line['市区町村名']))
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
 
+    const townName = removeUnnecessarySpace(line['大字・丁目名'])
+
     // 重複チェックに使用するためのキーには、「大字」または「字」を含めない。
-    const oazaKey = line['大字・丁目名'].replace(/^大?字/g, '')
+    const oazaKey = townName.replace(/^大?字/g, '')
     
     const koazaName = line['小字・通称名'] === 'NULL' ? '' : line['小字・通称名']
     const recordKey = line['都道府県名'] + cityName + oazaKey + koazaName
@@ -577,7 +581,6 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
       continue
     }
 
-    const townName = line['大字・丁目名']
     const postalCodeKanaItem = getPostalKanaOrRomeItems(
       line['都道府県名'], cityName, townName, postalCodeKanaItems, '市区町村名カナ', 'kana',
     )
@@ -677,7 +680,7 @@ const main = async () => {
   ])
   process.stderr.write('done\n')
 
-  const prefCodeArray = process.argv[2] ? [process.argv[2]] : Array.from(Array(47), (v, k) => k + 1)
+  const prefCodeArray = process.argv[2] ? process.argv[2].split(',') : Array.from(Array(47), (v, k) => k + 1)
 
   const download130bQueue = async.queue(async prefCode => {
     const outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
