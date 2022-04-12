@@ -1,0 +1,12 @@
+name: crean up when branch deleted
+on: delete
+
+jobs:
+  delete:
+    if: github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: cleanup
+        if: startsWith(github.event.ref, 'experimental_')
+        run: echo "s3://${{ secrets.AWS_BUCKET_NAME }}/$(cat ${{ github.event_path }} | jq --raw-output '.ref')"
+        # run: aws s3 rm --recursive "s3://${{ secrets.AWS_BUCKET_NAME }}/$(cat ${{ github.event_path }} | jq --raw-output '.ref')"
