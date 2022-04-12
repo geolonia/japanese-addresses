@@ -59,6 +59,7 @@ const main = async () => {
     for (let i = 0; i < addresses.length; i++) {
       const prefName = addresses[i].都道府県名
       const cityName = addresses[i].市区町村名
+      const zip = addresses[i].郵便番号
 
       const dir = path.join(basePath, prefName)
 
@@ -75,7 +76,13 @@ const main = async () => {
       if (!townJson[prefName][cityName]) {
         townJson[prefName][cityName] = []
       }
-      townJson[prefName][cityName].push({'town': addresses[i].大字町丁目名, 'koaza': addresses[i]['小字・通称名'], 'lat': addresses[i].緯度 ? Number(addresses[i].緯度) : null, 'lng': addresses[i].経度 ? Number(addresses[i].経度) : null})
+      townJson[prefName][cityName].push({
+        town: addresses[i].大字町丁目名,
+        koaza: addresses[i]['小字・通称名'],
+        lat: addresses[i].緯度 ? Number(addresses[i].緯度) : null,
+        lng: addresses[i].経度 ? Number(addresses[i].経度) : null,
+        zip: zip || null,
+      })
 
       fs.writeFileSync(`${basePath}/${prefName}/${cityName}.json`, JSON.stringify(townJson[prefName][cityName]));
     }
