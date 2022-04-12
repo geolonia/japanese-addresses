@@ -35,4 +35,5 @@ jobs:
           aws-region: ap-northeast-1
       - name: S3 sync
         working-directory: api
-        run: aws s3 sync . "s3://${{ secrets.AWS_BUCKET_NAME }}/$GITHUB_REF_NAME" --delete --cache-control "public, max-age=604800, immutable"
+        run:  echo "s3://${{ secrets.AWS_BUCKET_NAME }}/$GITHUB_REF_NAME"
+        # run: aws s3 sync . "s3://${{ secrets.AWS_BUCKET_NAME }}/$GITHUB_REF_NAME" --delete --cache-control "public, max-age=604800, immutable"
