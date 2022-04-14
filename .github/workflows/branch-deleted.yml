@@ -6,7 +6,15 @@ jobs:
     if: github.event.ref_type == 'branch'
     runs-on: ubuntu-latest
     steps:
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ap-northeast-1
+          role-to-assume: arn:aws:iam::762706324393:role/github-actions-estate-id-deploy
+
       - name: cleanup
         if: startsWith(github.event.ref, 'experimental_')
-        run: echo "s3://${{ secrets.AWS_BUCKET_NAME }}/$(cat ${{ github.event_path }} | jq --raw-output '.ref')"
-        # run: aws s3 rm --recursive "s3://${{ secrets.AWS_BUCKET_NAME }}/$(cat ${{ github.event_path }} | jq --raw-output '.ref')"
+        run: echo "s3://geolonia-japanese-addresses/$(cat ${{ github.event_path }} | jq --raw-output '.ref')"
+        # run: aws s3 rm --recursive "s3://geolonia-japanese-addresses/$(cat ${{ github.event_path }} | jq --raw-output '.ref')"
+        run: aws s3 ls s3://geolonia-japanese-addresses
