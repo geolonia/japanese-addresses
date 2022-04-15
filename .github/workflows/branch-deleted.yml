@@ -12,7 +12,6 @@ jobs:
       contents: read
 
     steps:
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -21,6 +20,7 @@ jobs:
 
       - name: cleanup
         if: startsWith(github.event.ref, 'experimental_')
-        run: echo "s3://geolonia-japanese-addresses/$(cat ${{ github.event_path }} | jq --raw-output '.ref')"
-        # run: aws s3 rm --recursive "s3://geolonia-japanese-addresses/$(cat ${{ github.event_path }} | jq --raw-output '.ref')"
-        run: aws s3 ls s3://geolonia-japanese-addresses
+        run: |
+          echo "s3://geolonia-japanese-addresses/$(cat ${{ github.event_path }} | jq --raw-output '.ref')"
+          aws s3 ls s3://geolonia-japanese-addresses
+          # run: aws s3 rm --recursive "s3://geolonia-japanese-addresses/$(cat ${{ github.event_path }} | jq --raw-output '.ref')"
