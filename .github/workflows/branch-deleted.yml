@@ -17,7 +17,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: ap-northeast-1
-          role-to-assume: arn:aws:iam::762706324393:role/github-actions-estate-id-deploy
+          role-to-assume: arn:aws:iam::762706324393:role/github-actions-geolonia-deploy
 
       - name: cleanup
         if: startsWith(github.event.ref, 'experimental_')
