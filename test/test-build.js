@@ -32,4 +32,10 @@ describe('latest.csvのテスト', () => {
     data = lines[24485]
     expect(data).to.equal('"01","北海道","ホッカイドウ","HOKKAIDO","01632","河東郡士幌町","カトウグンシホロチョウ","KATO GUN SHIHORO CHO","字士幌仲通",,,,43.168944,143.246195')
   })
+
+  // https://github.com/geolonia/japanese-addresses/issues/97
+  it('上伊那郡南箕輪の市区町村コードが空欄にならない', () => {
+    data = lines[2632]
+    expect(data).to.equal('"20","長野県","ナガノケン","NAGANO KEN","20385","上伊那郡南箕輪村","カミイナグンミナミミノワムラ","KAMIINA GUN MINAMIMINOWA MURA","（大字なし）",,,,35.864863,137.960291')
+  })
 })
