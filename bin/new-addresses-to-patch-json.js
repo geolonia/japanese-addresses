@@ -7,7 +7,7 @@ const { normalize } = require('@geolonia/normalize-japanese-addresses')
 const number2kanji = require('@geolonia/japanese-numeral').number2kanji
 const Romanizer = require('js-hira-kata-romanize')
 const r = new Romanizer({chouon: Romanizer.CHOUON_SKIP, upper: Romanizer.UPPER_ALL})
-const NEW_ADDRESSES_URL = 'https://kokudo.or.jp/place/pl2021_7.html'
+const new_address_url = process.argv[2] || 'https://kokudo.or.jp/place/'
 
 const zenkaku2hankaku = (str) => {
   return str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, (s) => {
@@ -60,7 +60,7 @@ const constructAddresses = (address, matchedData) => {
         '小字・通称名': '',
         '緯度': null,
         '経度': null,
-        '参照': 'TODO: 自治体のホームページのURLなど、リクエストの根拠となる情報を記載する。',
+        '参照': new_address_url,
         '更新日': formatDate(new Date())
       })
     }
@@ -81,7 +81,7 @@ const constructAddresses = (address, matchedData) => {
       '小字・通称名': '',
       '緯度': null,
       '経度': null,
-      '参照': 'TODO: 自治体のホームページのURLなど、リクエストの根拠となる情報を記載する。',
+      '参照': new_address_url,
       '更新日': formatDate(new Date())
     })
   // 「茨城県筑西市八丁台（はっちょうだい）」のような住所
@@ -101,7 +101,7 @@ const constructAddresses = (address, matchedData) => {
       '小字・通称名': '',
       '緯度': null,
       '経度': null,
-      '参照': 'TODO: 自治体のホームページのURLなど、リクエストの根拠となる情報を記載する。',
+      '参照': new_address_url,
       '更新日': formatDate(new Date())
     })
   }
@@ -116,7 +116,7 @@ const main = async () => {
   const latestData = csvSync(fs.readFileSync(`${__dirname}/../data/latest.csv`, 'utf-8'));
 
   // 地名変更情報ページにあるtableの各セルを取得する
-  const elements = httpcli.fetchSync(NEW_ADDRESSES_URL).$('table.place-table td')
+  const elements = httpcli.fetchSync(new_address_url).$('table.place-table td')
   
   for (let i = 0; i < elements.length; i++) {
     // 住所・地名のみを処理する
