@@ -397,7 +397,6 @@ const _downloadNlftpMlitFile = (prefCode, outPath, version) => new Promise((reso
 // 位置参照情報(大字・町丁目レベル)から住所データを取得する
 const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems) => {
   const records = {}
-  const cityCodes = {}
 
   const outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
 
@@ -437,10 +436,6 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
     const postalCodeRomeItem = getPostalKanaOrRomeItems(
       line['都道府県名'], cityName, townName, postalCodeRomeItems, '市区町村名ローマ字', 'rome',
     )
-
-    if (!cityCodes[cityName]) {
-      cityCodes[cityName] = line['市区町村コード']
-    }
 
     // 重複チェックに使用するためのキーには、「大字」または「字」を含めない。
     const oazaKey = townName.replace(/^大?字/g, '')
@@ -491,7 +486,7 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
 
   console.log(`${prefCode}: 大字・町丁目レベル ${Object.values(records).length}件`)
 
-  return { records, cityCodes }
+  return records
 }
 
 // 経度・緯度
@@ -516,7 +511,7 @@ const getCenter = (recordKey) => {
 }
 
 // 位置参照情報(街区レベル)から住所データを取得する
-const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems, records, cityCodes) => {
+const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems, records) => {
   const outPath = path.join(dataDir, `nlftp_mlit_180a_${prefCode}.csv`)
 
   while (!fs.existsSync(outPath)) {
@@ -598,7 +593,7 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
       postalCodeRomeItem
         ? postalCodeRomeItem['都道府県名ローマ字']
         : '',
-      cityCodes[cityName],
+      postalCodeKanaItem['全国地方公共団体コード'],
       cityName,
       postalCodeKanaItem
         ? han2zen(postalCodeKanaItem['市区町村名カナ'])
@@ -629,7 +624,7 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
 
   console.log(`${prefCode}: 街区レベル ${count}件`)
 
-  return { records }
+  return records
 }
 
 const getAddressItems = async (
@@ -657,15 +652,12 @@ const getAddressItems = async (
     prefCode,
     filteredPostalCodeKanaItems,
     filteredPostalCodeRomeItems,
-    oazaData.records,
-    oazaData.cityCodes
+    oazaData
   )
 
-  records = gaikuData.records
+  console.log(`${prefCode}: 街区レベル + 大字・町丁目レベル ${Object.values(gaikuData).length}件`)
 
-  console.log(`${prefCode}: 街区レベル + 大字・町丁目レベル ${Object.values(records).length}件`)
-
-  return { records }
+  return gaikuData
 }
 
 const main = async () => {
@@ -697,7 +689,6 @@ const main = async () => {
       await _downloadNlftpMlitFile(prefCode, outPath, '18.0a')
     }
   }, 3)
-
 
   prefCodeArray.forEach(prefNumber => {
     const prefCode = toPrefCode(prefNumber)
@@ -739,7 +730,7 @@ const main = async () => {
     const tp1 = performance.now()
     console.log(`${prefCode}: build took ` + (tp1 - tp0) + ' milliseconds.')
 
-    outfileWriterQueue.push(Object.values(data.records))
+    outfileWriterQueue.push(Object.values(data))
   } // pref loop
 
   await outfileWriterQueue.drain()
