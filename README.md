@@ -6,6 +6,8 @@
 
 [ダウンロード](https://raw.githubusercontent.com/geolonia/japanese-addresses/master/data/latest.csv)
 
+[リリースノート](https://github.com/geolonia/japanese-addresses/releases)
+
 ## 住所データ仕様
 
 ### ファイルフォーマット
