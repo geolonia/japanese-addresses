@@ -38,3 +38,4 @@ yarn.lock
 !/data/latest_v2.csv
 !/data/patch.json
 
+tmp
