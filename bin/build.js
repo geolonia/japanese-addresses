@@ -439,7 +439,7 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
 
     // 重複チェックに使用するためのキーには、「大字」または「字」を含めない。
     const oazaKey = townName.replace(/^大?字/g, '')
-    
+
     const recordKey = line['都道府県名'] + cityName + oazaKey
 
     // to avoid duplication
@@ -567,10 +567,10 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
 
     // 重複チェックに使用するためのキーには、「大字」または「字」を含めない。
     const oazaKey = townName.replace(/^大?字/g, '')
-    
+
     const koazaName = line['小字・通称名'] === 'NULL' ? '' : line['小字・通称名']
     const recordKey = line['都道府県名'] + cityName + oazaKey + koazaName
-    
+
     // to avoid duplication
     if (records[recordKey]) {
       continue
@@ -656,6 +656,7 @@ const getAddressItems = async (
   )
 
   console.log(`${prefCode}: 街区レベル + 大字・町丁目レベル ${Object.values(gaikuData).length}件`)
+  // ここで住居表示住所が整備済みか入力する
 
   return gaikuData
 }
@@ -715,7 +716,8 @@ const main = async () => {
     '"大字町丁目名ローマ字"',
     '"小字・通称名"',
     '"緯度"',
-    '"経度"'
+    '"経度"',
+    '"住居表示"',
   ].join(',') + '\n')
 
   for (let i = 0; i < prefCodeArray.length; i++) {
