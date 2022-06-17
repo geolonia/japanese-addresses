@@ -129,6 +129,8 @@ https://geolonia.github.io/japanese-addresses/api/ja/<都道府県名>/<市区�
 * [国土交通省位置参照情報ダウンロードサイト](https://nlftp.mlit.go.jp/cgi-bin/isj/dls/_choose_method.cgi)
 * [郵便番号データダウンロード - 日本郵便](https://www.post.japanpost.jp/zipcode/download.html)
 
+また、住居表示住所 API は「アドレス・ベース・レジストリ」（デジタル庁）[住居表示住所・住居マスターデータセット](https://registry-catalog.registries.digital.go.jp/dataset?q=%E4%BD%8F%E5%B1%85%E8%A1%A8%E7%A4%BA&sort=metadata_modified+desc) をもとに株式会社 Geolonia が作成したものです。
+
 ## 貢献方法
 
 * 本データに不具合がある場合には、[Issue](https://github.com/geolonia/japanese-addresses/issues) または[プルリクエスト](https://github.com/geolonia/japanese-addresses/pulls)にてご報告ください。
