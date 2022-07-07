@@ -214,6 +214,11 @@ const removeStringEnclosedInParentheses = text => {
   return text.replace(REMOVE_STRING_IN_PARENS_REGEX, '')
 }
 
+const REMOVE_STRING_STARTING_WITH_OPENING_PARENS_REGEX = /\(.+$/
+const removeStringStartingWithOpeningParentheses = text => {
+  return text.replace(REMOVE_STRING_STARTING_WITH_OPENING_PARENS_REGEX, '')
+}
+
 const getPostalKanaOrRomeItems = (
   prefName,
   cityName,
@@ -280,6 +285,16 @@ const getPostalKanaOrRomeItems = (
         postalRecord['町域名ローマ字'] = ''
       }
     }
+
+    // 「ナカマチ(5115-5149、5171、5183、5186、」のような場合の「(」以降の不要な文字列を削除する。
+    if (postalRecord['町域名カナ']) {
+      postalRecord['町域名カナ'] = removeStringStartingWithOpeningParentheses(postalRecord['町域名カナ'])
+    }
+
+    if (postalRecord['町域名ローマ字']) {
+      postalRecord['町域名ローマ字'] = removeStringStartingWithOpeningParentheses(postalRecord['町域名ローマ字'])
+    }
+
     return postalRecord
   }
 }
