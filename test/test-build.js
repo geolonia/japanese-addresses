@@ -38,4 +38,10 @@ describe('latest.csvのテスト', () => {
     data = lines[2632]
     expect(data).to.equal('"20","長野県","ナガノケン","NAGANO KEN","20385","上伊那郡南箕輪村","カミイナグンミナミミノワムラ","KAMIINA GUN MINAMIMINOWA MURA","（大字なし）",,,,35.864863,137.960291')
   })
+
+  // https://github.com/geolonia/japanese-addresses/issues/110
+  it('ken_all.csv 由来の「(5115-5149、5171、5183、5186、」のような不要な文字列を削除する', () => {
+    data = lines[29215]
+    expect(data).to.equal('"29","奈良県","ナラケン","NARA KEN","29201","奈良市","ナラシ","NARA SHI","中町","ナカマチ","NAKAMACHI",,34.673048,135.747687')
+  })
 })
