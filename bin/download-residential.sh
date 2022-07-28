@@ -5,7 +5,7 @@ set -e
 mkdir -p tmp
 pushd tmp
 if [ ! -d base-registry-tools ]; then
-  git clone https://github.com/geolonia/base-registry-tools.git
+  git clone https://github.com/geolonia/base-registry-tools.git -b v0.0.1 --depth 1
 fi
 pushd base-registry-tools
 mkdir -p out

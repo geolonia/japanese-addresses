@@ -35,7 +35,7 @@ CSV
 
 このデータを使用した API をご提供しています。
 
-### 都道府県 - 市町村エンドポイント
+#### 都道府県 - 市町村エンドポイント
 
 ```
 https://geolonia.github.io/japanese-addresses/api/ja.json
@@ -65,7 +65,7 @@ https://geolonia.github.io/japanese-addresses/api/ja.json
   ],
 ```
 
-### 町丁目エンドポイント
+#### 町丁目エンドポイント
 
 ```
 https://geolonia.github.io/japanese-addresses/api/ja/<都道府県名>/<市区町村名>.json
@@ -121,6 +121,15 @@ https://geolonia.github.io/japanese-addresses/api/ja/<都道府県名>/<市区�
 
 * 町丁目エンドポイントは、すべての地名を網羅しているわけではありません。
 
+## 住所データ・ API のビルド
+
+```shell
+$ git clone git@github.com:geolonia/japanese-addresses.git
+$ cd japanese-addresses
+$ npm install
+$ npm run build # 元データのダウンロードと latest.csv の作成を行います
+$ npm run build:api # latest.csv から API を作成します
+```
 
 ## 出典
 

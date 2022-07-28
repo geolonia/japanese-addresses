@@ -5,9 +5,6 @@ import unzip from 'unzipper'
 import csvParse from 'csv-parse/lib/sync.js'
 import { normalize, config } from '@geolonia/normalize-japanese-addresses'
 import process from 'process'
-import child_process from 'child_process'
-import os from 'os'
-import cluster from 'cluster'
 
 config.japaneseAddressesApi = `file://${process.cwd()}/api/ja`
 
@@ -65,22 +62,27 @@ const file2jyukyoCityTree = async (file, posFile) => {
 
   const tree = normalizedItems.reduce((prev, item) => {
     const { town, gaiku, jyukyo, lat, lng } = item
+
     if(!prev[town]) {
       prev[town] = []
     }
-  prev[town].push({ gaiku, jyukyo, lat, lng })
+    prev[town].push({ gaiku, jyukyo, lat, lng })
     return prev
   }, {})
   return { tree, pref, city }
 }
 
+/**
+ * API を拡張して住居表示住所を参照可能にします
+ * @param {} tree
+ * @param {*} param1
+ */
 const extendAPIwithResidentialInfo = async (tree, { pref, city }) => {
   const cityDirname = `api/ja/${pref}/${city}`
   await fs.mkdir(cityDirname, { recursive: true })
   const cityList = JSON.parse(await fs.readFile(`api/ja/${pref}/${city}.json`))
   for (const town in tree) {
     if(!cityList.find((townItem) => townItem.town === town)) {
-      console.log(town, cityList.length)
       console.warn(`Skipping unknown town name: ${pref}/${city}/${town}`)
     } else {
       const townDirname = `api/ja/${pref}/${city}/${town}`
@@ -102,25 +104,17 @@ const extendAPIwithResidentialInfo = async (tree, { pref, city }) => {
 
 const main = async () => {
   console.time('all')
-  const filenames = await fs.readdir(csvDir)
-
-  const promises = []
+  const filenames = await fs.readdir(csvDir))
 
   while (filenames.length > 0) {
     const filename = filenames.shift()
     if(!filename) continue;
-    promises.push(new Promise((resolve) => {
-      cluster
-        .fork({ FILENAME: filename })
-        .on('exit', resolve)
-    }))
+    await worker(filename)
   }
-  await Promise.all(promises)
   console.timeEnd('all')
 }
 
-const worker = async () => {
-  const filename = process.env.FILENAME
+const worker = async (filename) => {
   console.time(filename)
   const posFilename = filename.replace('mt_rsdtdsp_rsdt_', 'mt_rsdtdsp_rsdt_pos_')
   if(posFilename === filename) {
@@ -135,8 +129,7 @@ const worker = async () => {
     console.error(error)
   }
   console.timeEnd(filename)
-  process.exit()
 }
 
-cluster.isWorker ? worker() : main()
+main()
 
