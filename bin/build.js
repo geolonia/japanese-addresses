@@ -530,6 +530,8 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
   bar.start(data.length, 0)
 
   // 緯度・経度をいったん全部coordsに格納する
+  // 街区も一緒に書き出したいので、これはこのスコープの gaikuRecords に格納する
+  const gaikuRecords = []
   for (let index = 0; index < data.length; index++) {
     const line = data[index]
     const renameEntry =
@@ -545,7 +547,14 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
 
     const koazaName = line['小字・通称名'] === 'NULL' ? '' : line['小字・通称名']
     const recordKey = line['都道府県名'] + cityName + oazaKey + koazaName
-    addToCoords(recordKey, Number(line['経度']), Number(line['緯度']))
+    const lng = Number(line['経度'])
+    const lat = Number(line['緯度'])
+    addToCoords(recordKey, lng, lat)
+
+    if(line['住居表示フラグ'] === '1') {
+      const gaikuNum = line['街区符号・地番']
+      gaikuRecords.push([line['都道府県名'], cityName,line['大字・丁目名'], gaikuNum, lng, lat])
+    }
   }
 
   let count = 0
@@ -622,9 +631,9 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
   } // line iteration
   bar.stop()
 
-  console.log(`${prefCode}: 街区レベル ${count}件`)
+  const gaikuItems = gaikuRecords.map(record => record.join(',') + '\n')
 
-  return records
+  return { towns: records, gaikuItems }
 }
 
 const getAddressItems = async (
@@ -632,8 +641,6 @@ const getAddressItems = async (
   postalCodeKanaItems,
   postalCodeRomeItems,
 ) => {
-  let records = {}
-
   const prefName = prefNames[parseInt(prefCode, 10) - 1]
   const filteredPostalCodeKanaItems = postalCodeKanaItems.filter(
     item => item['都道府県名'] === prefName,
@@ -648,17 +655,17 @@ const getAddressItems = async (
     filteredPostalCodeRomeItems,
   )
 
-  const gaikuData = await getGaikuAddressItems(
+  const { towns, gaikuItems } = await getGaikuAddressItems(
     prefCode,
     filteredPostalCodeKanaItems,
     filteredPostalCodeRomeItems,
     oazaData
   )
 
-  console.log(`${prefCode}: 街区レベル + 大字・町丁目レベル ${Object.values(gaikuData).length}件`)
-  // ここで住居表示住所が整備済みか入力する
+  console.log(`${prefCode}: 大字・町丁目レベル ${Object.values(towns).length}件`)
+  console.log(`${prefCode}: 街区レベル ${Object.values(gaikuItems).length}件`)
 
-  return gaikuData
+  return { towns, gaikuItems }
 }
 
 const main = async () => {
@@ -698,9 +705,14 @@ const main = async () => {
   })
 
   const outfile = await fs.promises.open(path.join(dataDir, 'latest.csv'), 'w')
+  const gaiku_outfile = await fs.promises.open(path.join(dataDir, 'latest_gaiku.csv'), 'w')
+
   const outfileWriterQueue = async.queue(async str => {
     await outfile.write(str)
   }, 1)
+  const gaiku_outfileWriterQueue = async.queue(async str => {
+    await gaiku_outfile.write(str)
+  })
 
   outfileWriterQueue.push([
     '"都道府県コード"',
@@ -717,14 +729,22 @@ const main = async () => {
     '"小字・通称名"',
     '"緯度"',
     '"経度"',
-    '"住居表示"',
+  ].join(',') + '\n')
+
+  gaiku_outfileWriterQueue.push([
+    '"都道府県名"',
+    '"市区町村名"',
+    '"大字町丁目名"',
+    '"街区番号"',
+    '"緯度"',
+    '"経度"',
   ].join(',') + '\n')
 
   for (let i = 0; i < prefCodeArray.length; i++) {
-    const prefCode = toPrefCode(prefCodeArray[i])
+      const prefCode = toPrefCode(prefCodeArray[i])
 
     const tp0 = performance.now()
-    const data = await getAddressItems(
+    const { towns, gaikuItems } = await getAddressItems(
       prefCode,
       postalCodeKanaItems,
       postalCodeRomeItems,
@@ -732,11 +752,14 @@ const main = async () => {
     const tp1 = performance.now()
     console.log(`${prefCode}: build took ` + (tp1 - tp0) + ' milliseconds.')
 
-    outfileWriterQueue.push(Object.values(data))
+    outfileWriterQueue.push(Object.values(towns))
+    gaiku_outfileWriterQueue.push(gaikuItems)
   } // pref loop
 
   await outfileWriterQueue.drain()
   await outfile.close()
+  await gaiku_outfileWriterQueue.drain()
+  await gaiku_outfile.close()
 
   const t1 = performance.now()
   console.log('build.js took ' + (t1 - t0) + ' milliseconds.')

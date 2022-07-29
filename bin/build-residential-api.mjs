@@ -104,7 +104,7 @@ const extendAPIwithResidentialInfo = async (tree, { pref, city }) => {
 
 const main = async () => {
   console.time('all')
-  const filenames = await fs.readdir(csvDir))
+  const filenames = await fs.readdir(csvDir)
 
   while (filenames.length > 0) {
     const filename = filenames.shift()
