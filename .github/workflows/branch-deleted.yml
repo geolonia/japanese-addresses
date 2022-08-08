@@ -1,0 +1,26 @@
+name: crean up when branch deleted
+on: delete
+
+jobs:
+  delete:
+    if: github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+
+    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ap-northeast-1
+          role-to-assume: arn:aws:iam::762706324393:role/github-actions-geolonia-deploy
+
+      - name: cleanup
+        if: startsWith(github.event.ref, 'experimental_')
+        run: |
+          echo "s3://geolonia-japanese-addresses/$(cat ${{ github.event_path }} | jq --raw-output '.ref')"
+          aws s3 ls s3://geolonia-japanese-addresses
+          # run: aws s3 rm --recursive "s3://geolonia-japanese-addresses/$(cat ${{ github.event_path }} | jq --raw-output '.ref')"

@@ -3,12 +3,19 @@ on:
   push:
     branches:
       - develop
+      - 'experimental_*'
     tags:
       - "!*"
 
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
       - uses: actions/checkout@v2
       - run: mkdir data || true
@@ -22,16 +29,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: mkdir data || true
-      - run: npm install
-      - run: NODE_OPTIONS="--max-old-space-size=4096" node bin/build.js
-      - run: node bin/build-api.js
-      - name: "Configure AWS credentials"
+
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-1
+          role-to-assume: arn:aws:iam::762706324393:role/github-actions-geolonia-deploy
+
+      - run: mkdir data || true
+
+      - run: npm install
+
+      - run: NODE_OPTIONS="--max-old-space-size=4096" node bin/build.js
+
+      - run: node bin/build-api.js
+
       - name: S3 sync
         working-directory: api
-        run: aws s3 sync . s3://${{ secrets.AWS_BUCKET_NAME }}/develop --delete --cache-control "public, max-age=604800, immutable"
+        run: aws s3 sync . "s3://geolonia-japanese-addresses/$GITHUB_REF_NAME" --delete --cache-control "public, max-age=604800, immutable"
