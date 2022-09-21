@@ -15,7 +15,9 @@ const performance = require('perf_hooks').performance
 const kanji2number = require('@geolonia/japanese-numeral').kanji2number
 const turfCenter = require('@turf/center').default
 const turfNearestPoint = require('@turf/nearest-point').default
-const { featureCollection, point } = require('@turf/helpers');
+const { featureCollection, point } = require('@turf/helpers')
+const sqlite3 = require('sqlite3')
+const db = new sqlite3.Database('./data/latest.db')
 
 const sleep = promisify(setTimeout)
 
@@ -490,10 +492,6 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
       Number(line['緯度']),
       Number(line['経度'])
     ]
-      .map(item =>
-        item && typeof item === 'string' ? `"${item}"` : item,
-      )
-      .join(',') + '\n'
 
     records[recordKey] = record
   } // line iteration
@@ -636,10 +634,6 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
       Number(center.geometry.coordinates[1]),
       Number(center.geometry.coordinates[0])
     ]
-      .map(item =>
-        item && typeof item === 'string' ? `"${item}"` : item,
-      )
-      .join(',') + '\n'
 
     records[recordKey] = record
     count++
@@ -684,6 +678,12 @@ const getAddressItems = async (
 }
 
 const main = async () => {
+  db.serialize(() => {
+    db.run('drop table if exists addresses_unsorted')
+    db.run('drop table if exists addresses')
+    db.run('create table addresses_unsorted(都道府県コード text, 都道府県名 text, 都道府県名カナ text, 都道府県名ローマ字 text, 市区町村コード text, 市区町村名 text, 市区町村名カナ text, 市区町村名ローマ字 text, 大字町丁目名 text, 大字町丁目名カナ text, 大字町丁目名ローマ字 text, 小字・通称名 text, 緯度 real, 経度 real)')
+  })
+
   const t0 = performance.now()
   process.stderr.write('郵便番号辞書のダウンロード中...')
   const [
@@ -719,32 +719,14 @@ const main = async () => {
     download180aQueue.push(prefCode)
   })
 
-  const outfile = await fs.promises.open(path.join(dataDir, 'latest.csv'), 'w')
   const gaiku_outfile = await fs.promises.open(path.join(dataDir, 'latest_gaiku.csv'), 'w')
 
-  const outfileWriterQueue = async.queue(async str => {
-    await outfile.write(str)
+  const sqliteWriterQueue = async.queue(async array => {
+    db.run('insert into addresses_unsorted(都道府県コード, 都道府県名, 都道府県名カナ, 都道府県名ローマ字, 市区町村コード, 市区町村名, 市区町村名カナ, 市区町村名ローマ字, 大字町丁目名, 大字町丁目名カナ, 大字町丁目名ローマ字, 小字・通称名, 緯度, 経度) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', ...array)
   }, 1)
   const gaiku_outfileWriterQueue = async.queue(async str => {
     await gaiku_outfile.write(str)
   })
-
-  outfileWriterQueue.push([
-    '"都道府県コード"',
-    '"都道府県名"',
-    '"都道府県名カナ"',
-    '"都道府県名ローマ字"',
-    '"市区町村コード"',
-    '"市区町村名"',
-    '"市区町村名カナ"',
-    '"市区町村名ローマ字"',
-    '"大字町丁目名"',
-    '"大字町丁目名カナ"',
-    '"大字町丁目名ローマ字"',
-    '"小字・通称名"',
-    '"緯度"',
-    '"経度"',
-  ].join(',') + '\n')
 
   gaiku_outfileWriterQueue.push([
     '"都道府県名"',
@@ -756,7 +738,7 @@ const main = async () => {
   ].join(',') + '\n')
 
   for (let i = 0; i < prefCodeArray.length; i++) {
-      const prefCode = toPrefCode(prefCodeArray[i])
+    const prefCode = toPrefCode(prefCodeArray[i])
 
     const tp0 = performance.now()
     const { towns, gaikuItems } = await getAddressItems(
@@ -767,17 +749,19 @@ const main = async () => {
     const tp1 = performance.now()
     console.log(`${prefCode}: build took ` + (tp1 - tp0) + ' milliseconds.')
 
-    outfileWriterQueue.push(Object.values(towns))
+    sqliteWriterQueue.push(Object.values(towns))
     gaiku_outfileWriterQueue.push(gaikuItems)
   } // pref loop
 
-  await outfileWriterQueue.drain()
-  await outfile.close()
+  await sqliteWriterQueue.drain()
   await gaiku_outfileWriterQueue.drain()
   await gaiku_outfile.close()
 
   const t1 = performance.now()
   console.log('build.js took ' + (t1 - t0) + ' milliseconds.')
+
+  db.run('create table addresses as select * from addresses_unsorted order by 都道府県コード asc, 市区町村コード asc, 大字町丁目名カナ asc, 小字・通称名 asc')
+  db.close()
 }
 
 try {
