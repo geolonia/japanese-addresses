@@ -35,7 +35,6 @@ yarn.lock
 
 /data/*
 !/data/latest.csv
-!/data/latest.db
 !/data/latest_v2.csv
 !/data/patch.json
 住居表示.json
