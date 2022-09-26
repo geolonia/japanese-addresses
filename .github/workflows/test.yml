@@ -13,5 +13,9 @@ jobs:
       - run: npm install
       - name: Build Nagano, Hokkaido, and Nara data
         run: node bin/build.js 20,1,29
+      - name: sqlite3 install
+        run: sudo apt install libsqlite3-dev
+      - name: Generate csv file from sqlite3
+        run: sqlite3 -header -csv data/latest.db "select * from addresses;" > data/latest.csv
       - name: Test
         run: npx mocha
