@@ -18,6 +18,8 @@ const turfNearestPoint = require('@turf/nearest-point').default
 const { featureCollection, point } = require('@turf/helpers')
 const sqlite3 = require('sqlite3')
 const db = new sqlite3.Database('./data/latest.db')
+const exportToCsv = require('../lib/export-to-csv')
+const sortAddresses = require('../lib/sort-addresses')
 
 const sleep = promisify(setTimeout)
 
@@ -679,9 +681,8 @@ const getAddressItems = async (
 
 const main = async () => {
   db.serialize(() => {
-    db.run('drop table if exists addresses_unsorted')
     db.run('drop table if exists addresses')
-    db.run('create table addresses_unsorted(都道府県コード text, 都道府県名 text, 都道府県名カナ text, 都道府県名ローマ字 text, 市区町村コード text, 市区町村名 text, 市区町村名カナ text, 市区町村名ローマ字 text, 大字町丁目名 text, 大字町丁目名カナ text, 大字町丁目名ローマ字 text, 小字・通称名 text, 緯度 real, 経度 real)')
+    db.run('create table addresses(都道府県コード text, 都道府県名 text, 都道府県名カナ text, 都道府県名ローマ字 text, 市区町村コード text, 市区町村名 text, 市区町村名カナ text, 市区町村名ローマ字 text, 大字町丁目名 text, 大字町丁目名カナ text, 大字町丁目名ローマ字 text, 小字・通称名 text, 緯度 real, 経度 real)')
   })
 
   const t0 = performance.now()
@@ -722,7 +723,7 @@ const main = async () => {
   const gaiku_outfile = await fs.promises.open(path.join(dataDir, 'latest_gaiku.csv'), 'w')
 
   const sqliteWriterQueue = async.queue(async array => {
-    db.run('insert into addresses_unsorted(都道府県コード, 都道府県名, 都道府県名カナ, 都道府県名ローマ字, 市区町村コード, 市区町村名, 市区町村名カナ, 市区町村名ローマ字, 大字町丁目名, 大字町丁目名カナ, 大字町丁目名ローマ字, 小字・通称名, 緯度, 経度) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', ...array)
+    db.run('insert into addresses(都道府県コード, 都道府県名, 都道府県名カナ, 都道府県名ローマ字, 市区町村コード, 市区町村名, 市区町村名カナ, 市区町村名ローマ字, 大字町丁目名, 大字町丁目名カナ, 大字町丁目名ローマ字, 小字・通称名, 緯度, 経度) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', ...array)
   }, 1)
   const gaiku_outfileWriterQueue = async.queue(async str => {
     await gaiku_outfile.write(str)
@@ -760,7 +761,11 @@ const main = async () => {
   const t1 = performance.now()
   console.log('build.js took ' + (t1 - t0) + ' milliseconds.')
 
-  db.run('create table addresses as select * from addresses_unsorted order by 都道府県コード asc, 市区町村コード asc, 大字町丁目名カナ asc, 小字・通称名 asc')
+  db.serialize(async () => {
+    let addresses = await sortAddresses(db)
+    await exportToCsv(addresses, './data/latest.csv')
+  })
+
   db.close()
 }
 
