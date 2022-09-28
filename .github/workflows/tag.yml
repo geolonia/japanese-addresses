@@ -12,10 +12,6 @@ jobs:
       - run: mkdir data || true
       - run: npm install
       - run: NODE_OPTIONS="--max-old-space-size=4096" node bin/build.js
-      - name: sqlite3 install
-        run: sudo apt install libsqlite3-dev
-      - name: Generate csv file from sqlite3
-        run: sqlite3 -header -csv data/latest.db "select * from addresses;" > data/latest.csv
       - run: node bin/build-api.js
       - name: Get the version
         id: get_version

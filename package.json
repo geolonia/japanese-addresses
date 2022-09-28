@@ -5,7 +5,6 @@
   "main": "./bin/build.js",
   "scripts": {
     "build": "node bin/build.js",
-    "build:csv": "sqlite3 -header -csv data/latest.db 'select * from addresses;' > data/latest.csv",
     "build:api": "node bin/build-api.js"
   },
   "author": "",
