@@ -391,7 +391,7 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
         : '',
       '',
       Number(line['緯度']),
-      Number(line['経度'])
+      Number(line['経度']),
     ]
 
     records[recordKey] = record
@@ -406,6 +406,7 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
 // 経度・緯度
 let coords = {}
 const addToCoords = (recordKey, lng, lat) => {
+  // eslint-disable-next-line no-undefined
   if (coords[recordKey] === undefined) {
     coords[recordKey] = [[lng, lat]]
   } else {
@@ -416,7 +417,7 @@ const addToCoords = (recordKey, lng, lat) => {
 const getCenter = recordKey => {
   const arr = coords[recordKey]
   const features = featureCollection(
-    arr.map(c => point(c))
+    arr.map(c => point(c)),
   )
 
   // 各地点を囲む最小の長方形（bounding box）を作り、その中心に一番近い地点を返す。
@@ -465,9 +466,9 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
     const lat = Number(line['緯度'])
     addToCoords(recordKey, lng, lat)
 
-    if(line['住居表示フラグ'] === '1') {
+    if (line['住居表示フラグ'] === '1') {
       const gaikuNum = line['街区符号・地番']
-      gaikuRecords.push([line['都道府県名'], cityName,line['大字・丁目名'], gaikuNum, lng, lat])
+      gaikuRecords.push([line['都道府県名'], cityName, line['大字・丁目名'], gaikuNum, lng, lat])
     }
   }
 
@@ -531,7 +532,7 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
         : '',
       koazaName,
       Number(center.geometry.coordinates[1]),
-      Number(center.geometry.coordinates[0])
+      Number(center.geometry.coordinates[0]),
     ]
 
     records[recordKey] = record
@@ -577,14 +578,15 @@ const getAddressItems = async (
   return { towns, gaikuItems }
 }
 
-const PATCHES_PATH = `${__dirname}/../patches`;
+const PATCHES_PATH = `${__dirname}/../patches`
 const importPatches = async () => {
   let patchData = {}
 
   // patches以下の住所情報を追加
   let patches = []
+  // eslint-disable-next-line array-callback-return
   fs.readdirSync(PATCHES_PATH).map(fileName => {
-    patches = patches.concat(JSON.parse(fs.readFileSync(path.join(PATCHES_PATH, fileName), 'utf8')));
+    patches = patches.concat(JSON.parse(fs.readFileSync(path.join(PATCHES_PATH, fileName), 'utf8')))
   })
   patches.forEach(patch => {
     if (!patchData[patch.都道府県コード]) {
@@ -684,7 +686,7 @@ const main = async () => {
       prefCode,
       postalCodeKanaItems,
       postalCodeRomeItems,
-      patchData
+      patchData,
     )
     const tp1 = performance.now()
     console.log(`${prefCode}: build took ` + (tp1 - tp0) + ' milliseconds.')
