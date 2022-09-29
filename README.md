@@ -4,7 +4,9 @@
 
 本データは、国土交通省位置参照情報ダウンロードサービスで配布されている「大字・町丁目レベル位置参照情報」をベースとしていますが、「大字・町丁目レベル位置参照情報」データは年に一回更新であるのに対して、本リポジトリで配布するデータは毎月更新しています。
 
-[ダウンロード](https://raw.githubusercontent.com/geolonia/japanese-addresses/master/data/latest.csv)
+[latest.csvをダウンロード](https://raw.githubusercontent.com/geolonia/japanese-addresses/master/data/latest.csv)
+
+[latest.dbをダウンロード](https://raw.githubusercontent.com/geolonia/japanese-addresses/master/data/latest.db)
 
 [リリースノート](https://github.com/geolonia/japanese-addresses/releases)
 
@@ -12,7 +14,8 @@
 
 ### ファイルフォーマット
 
-CSV
+- latest.csv: CSV
+- latest.db: SQLite3で読み込めるバイナリ形式
 
 ### 列
 
@@ -30,6 +33,17 @@ CSV
 * 小字・通称名
 * 緯度（代表点）
 * 経度（代表点）
+
+### ソート順
+
+latest.csv の住所の並び番は以下の通りです。
+
+1. 都道府県コード 昇順
+2. 市区町村コード 昇順
+3. 大字町丁目名カナ 昇順
+4. 小字・通称名 昇順
+
+例えば都道府県コードが同じ住所同士であれば、市区町村コード 昇順に、市区町村コードも同じであれば、大字町丁目名カナ 昇順に、大字町丁目名カナまでも同じであれば、小字・通称名 昇順に並びます。
 
 ## API
 
