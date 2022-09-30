@@ -15,3 +15,14 @@ jobs:
         run: node bin/build.js 20,1,29,13
       - name: Test
         run: npx mocha
+      - name: Deploy generated files
+        run: |
+          git checkout --orphan gh-pages
+          git rm -rf . > /dev/null 2>&1
+          mv data/latest.csv .
+          mv data/latest.db .
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git add . > /dev/null 2>&1
+          git commit -m "Deploy" > /dev/null 2>&1
+          git push --force origin gh-pages
