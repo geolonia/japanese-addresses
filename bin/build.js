@@ -20,6 +20,7 @@ const sqlite3 = require('sqlite3')
 const db = new sqlite3.Database('./data/latest.db')
 const exportToCsv = require('../lib/export-to-csv')
 const sortAddresses = require('../lib/sort-addresses')
+const getPostalKanaOrRomeItems = require('../lib/get-postal-kana-or-rome-items')
 
 const sleep = promisify(setTimeout)
 
@@ -28,20 +29,6 @@ const dataDir = path.join(path.dirname(path.dirname(__filename)), 'data')
 const isjRenames = [
   { pref: '兵庫県', orig: '篠山市', renamed: '丹波篠山市' },
   { pref: '福岡県', orig: '筑紫郡那珂川町', renamed: '那珂川市' },
-]
-
-const isjPostalMappings = [
-  { pref: '青森県', postal: '東津軽郡外ヶ浜町', isj: '東津軽郡外ケ浜町' },
-  { pref: '茨城県', postal: '龍ケ崎市', isj: '龍ヶ崎市' },
-  { pref: '千葉県', postal: '鎌ケ谷市', isj: '鎌ヶ谷市' },
-  { pref: '千葉県', postal: '袖ケ浦市', isj: '袖ヶ浦市' },
-  { pref: '東京都', postal: '三宅島三宅村', isj: '三宅村',
-    kana: 'ミヤケムラ', rome: 'MIYAKE MURA' },
-  { pref: '東京都', postal: '八丈島八丈町', isj: '八丈町',
-    kana: 'ハチジョウマチ', rome: 'HACHIJO MACHI' },
-  { pref: '滋賀県', postal: '犬上郡多賀町', isj: '犬上郡大字多賀町',
-    kana: 'イヌカミグンオオアザタガチョウ', rome: 'INUKAMI GUN OAZA TAGA CHO' },
-  { pref: '福岡県', postal: '糟屋郡須惠町', isj: '糟屋郡須恵町' },
 ]
 
 const prefNames = [
@@ -200,9 +187,6 @@ const removeUnnecessarySpace = text => {
   return text.replace('　', '').trim()
 }
 
-const REMOVE_CHOME_REGEX = /[二三四五六七八九]?十?[一二三四五六七八九]?丁目?$/
-const removeChome = text => text.replace(REMOVE_CHOME_REGEX, '')
-
 const GET_CHOME_NUMBER_REGEX = /([二三四五六七八九]?十?[一二三四五六七八九]?)丁目?$/
 const getChomeNumber = (text, suffix = '') => {
   const match = text.match(GET_CHOME_NUMBER_REGEX)
@@ -216,91 +200,6 @@ const getChomeNumber = (text, suffix = '') => {
 const REMOVE_STRING_IN_PARENS_REGEX = /\(.+\)$/
 const removeStringEnclosedInParentheses = text => {
   return text.replace(REMOVE_STRING_IN_PARENS_REGEX, '')
-}
-
-const REMOVE_STRING_STARTING_WITH_OPENING_PARENS_REGEX = /\(.+$/
-const removeStringStartingWithOpeningParentheses = text => {
-  return text.replace(REMOVE_STRING_STARTING_WITH_OPENING_PARENS_REGEX, '')
-}
-
-const getPostalKanaOrRomeItems = (
-  prefName,
-  cityName,
-  townName,
-  postalCodeKanaOrRomeItems,
-  postalKanaOrRomeCityFieldName,
-  altKanaOrRomeCityFieldName,
-) => {
-  const postalAlt = isjPostalMappings.find(
-    ({ pref, isj }) => (pref === prefName && isj === cityName),
-  )
-
-  const townNameChomeRemoved = removeChome(townName)
-
-  if (postalAlt) {
-    let postalRecord = postalCodeKanaOrRomeItems.find(
-      item =>
-        item['都道府県名'] === prefName &&
-        item['市区町村名'] === postalAlt.postal &&
-        item['町域名'].indexOf(townNameChomeRemoved) === 0
-      ,
-    )
-
-    if (!postalRecord) {
-      postalRecord = postalCodeKanaOrRomeItems.find(
-        item =>
-          item['都道府県名'] === prefName &&
-          item['市区町村名'] === postalAlt.postal
-        ,
-      )
-      if (postalRecord['町域名カナ']) {
-        postalRecord['町域名カナ'] = ''
-      }
-      if (postalRecord['町域名ローマ字']) {
-        postalRecord['町域名ローマ字'] = ''
-      }
-    }
-
-    if (postalRecord && postalAlt[altKanaOrRomeCityFieldName]) {
-      postalRecord[postalKanaOrRomeCityFieldName] = postalAlt[altKanaOrRomeCityFieldName]
-    }
-
-    return postalRecord
-  } else {
-    let postalRecord = postalCodeKanaOrRomeItems.find(
-      item =>
-        item['都道府県名'] === prefName &&
-        item['市区町村名'] === cityName &&
-        item['町域名'].indexOf(townNameChomeRemoved) === 0
-      ,
-    )
-
-    if (!postalRecord) {
-      postalRecord = postalCodeKanaOrRomeItems.find(
-        item =>
-          item['都道府県名'] === prefName &&
-          item['市区町村名'] === cityName
-        ,
-      )
-      if (postalRecord['町域名カナ']) {
-        postalRecord['町域名カナ'] = ''
-      }
-      if (postalRecord['町域名ローマ字']) {
-        postalRecord['町域名ローマ字'] = ''
-      }
-    }
-
-    // 「ナカマチ(5115-5149、5171、5183、5186、」のような場合の「(」以降の不要な文字列を削除する。
-    if (postalRecord['町域名カナ']) {
-      postalRecord['町域名カナ'] = removeStringStartingWithOpeningParentheses(postalRecord['町域名カナ'])
-    }
-
-    if (postalRecord['町域名ローマ字']) {
-      postalRecord['町域名ローマ字'] = removeStringStartingWithOpeningParentheses(postalRecord['町域名ローマ字'])
-    }
-
-    return postalRecord
-  }
 }
 
 const _downloadZippedFile = (url, path) => new Promise( resolve => {
