@@ -313,8 +313,8 @@ const _downloadNlftpMlitFile = (prefCode, outPath, version) => new Promise((reso
 })
 
 // 位置参照情報(大字・町丁目レベル)から住所データを取得する
-const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems) => {
-  const records = {}
+const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems, patchData) => {
+  const records = patchData[prefCode] || {}
 
   const outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
 
@@ -413,7 +413,7 @@ const addToCoords = (recordKey, lng, lat) => {
   }
 }
 
-const getCenter = (recordKey) => {
+const getCenter = recordKey => {
   const arr = coords[recordKey]
   const features = featureCollection(
     arr.map(c => point(c))
@@ -470,8 +470,6 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
       gaikuRecords.push([line['都道府県名'], cityName,line['大字・丁目名'], gaikuNum, lng, lat])
     }
   }
-
-  let count = 0
 
   const dataLength = data.length
   for (let index = 0; index < dataLength; index++) {
@@ -537,7 +535,6 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
     ]
 
     records[recordKey] = record
-    count++
   } // line iteration
   bar.stop()
 
@@ -550,6 +547,7 @@ const getAddressItems = async (
   prefCode,
   postalCodeKanaItems,
   postalCodeRomeItems,
+  patchData,
 ) => {
   const prefName = prefNames[parseInt(prefCode, 10) - 1]
   const filteredPostalCodeKanaItems = postalCodeKanaItems.filter(
@@ -563,19 +561,58 @@ const getAddressItems = async (
     prefCode,
     filteredPostalCodeKanaItems,
     filteredPostalCodeRomeItems,
+    patchData,
   )
 
   const { towns, gaikuItems } = await getGaikuAddressItems(
     prefCode,
     filteredPostalCodeKanaItems,
     filteredPostalCodeRomeItems,
-    oazaData
+    oazaData,
   )
 
   console.log(`${prefCode}: 大字・町丁目レベル ${Object.values(towns).length}件`)
   console.log(`${prefCode}: 街区レベル ${Object.values(gaikuItems).length}件`)
 
   return { towns, gaikuItems }
+}
+
+const PATCHES_PATH = `${__dirname}/../patches`;
+const importPatches = async () => {
+  let patchData = {}
+
+  // patches以下の住所情報を追加
+  let patches = []
+  fs.readdirSync(PATCHES_PATH).map(fileName => {
+    patches = patches.concat(JSON.parse(fs.readFileSync(path.join(PATCHES_PATH, fileName), 'utf8')));
+  })
+  patches.forEach(patch => {
+    if (!patchData[patch.都道府県コード]) {
+      patchData[patch.都道府県コード] = {}
+    }
+
+    const addressKey = `${patch.都道府県名}${patch.市区町村名}${patch.大字町丁目名}${patch['小字・通称名']}`
+    if (!patchData[patch.都道府県コード][addressKey]) {
+      patchData[patch.都道府県コード][addressKey] = [
+        patch.都道府県コード,
+        patch.都道府県名,
+        patch.都道府県名カナ,
+        patch.都道府県名ローマ字,
+        patch.市区町村コード,
+        patch.市区町村名,
+        patch.市区町村名カナ,
+        patch.市区町村名ローマ字,
+        patch.大字町丁目名,
+        patch.大字町丁目名カナ,
+        patch.大字町丁目名ローマ字,
+        patch['小字・通称名'],
+        patch.緯度,
+        patch.経度,
+      ]
+    }
+  })
+
+  return patchData
 }
 
 const main = async () => {
@@ -637,6 +674,8 @@ const main = async () => {
     '"経度"',
   ].join(',') + '\n')
 
+  const patchData = await importPatches()
+
   for (let i = 0; i < prefCodeArray.length; i++) {
     const prefCode = toPrefCode(prefCodeArray[i])
 
@@ -645,6 +684,7 @@ const main = async () => {
       prefCode,
       postalCodeKanaItems,
       postalCodeRomeItems,
+      patchData
     )
     const tp1 = performance.now()
     console.log(`${prefCode}: build took ` + (tp1 - tp0) + ' milliseconds.')
