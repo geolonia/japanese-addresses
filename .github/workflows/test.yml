@@ -14,4 +14,4 @@ jobs:
       - name: Build Nagano, Hokkaido, Nara, Yamanashi and Tokyo data
         run: node bin/build.js 20,1,29,19,13
       - name: Test
-        run: npx mocha      
+        run: npx mocha
