@@ -29,7 +29,7 @@ describe('latest.csvのテスト', () => {
   })
 
   it('大字町丁名データの全角スペースを削除する', () => {
-    const data = lines[21974]
+    const data = lines[22010]
     expect(data).to.equal('"01","北海道","ホッカイドウ","HOKKAIDO","01632","河東郡士幌町","カトウグンシホロチョウ","KATO GUN SHIHORO CHO","字士幌仲通",,,,43.168944,143.246195')
   })
 
