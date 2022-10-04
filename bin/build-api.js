@@ -4,14 +4,11 @@ const basePath = process.argv[2] && process.argv[2] === 'staging' ? `${__dirname
 const mkdirp = require("mkdirp");
 const path = require('path');
 
-const PATCHES_PATH = `${__dirname}/../patches`;
-
 const main = async () => {
   mkdirp.sync(basePath);
   const content = fs.readFileSync(`${__dirname}/../data/latest.csv`, 'utf-8');
 
   let addresses = []
-  let addressKeys = []
 
   const parser = parse(content, { delimiter: "," });
 
@@ -30,7 +27,6 @@ const main = async () => {
       }
 
       addresses.push(item)
-      addressKeys.push(`${item.都道府県名}${item.市区町村名}${item.大字町丁目名}`)
     }
   });
 
@@ -40,18 +36,6 @@ const main = async () => {
   });
 
   parser.on("end", () => {
-
-    // patches以下の住所情報を追加
-    let patches = []
-    fs.readdirSync(PATCHES_PATH).map(fileName => {
-      patches = patches.concat(JSON.parse(fs.readFileSync(path.join(PATCHES_PATH, fileName), 'utf8')));
-    })
-    patches.forEach(patch => {
-      if (!addressKeys.includes(`${patch.都道府県名}${patch.市区町村名}${patch.大字町丁目名}`)) {
-        addresses.push(patch)
-      }
-    });
-
     // 都道府県名および市区町村名用のJSON
     const _prefJson = {}
     const prefJson = {}

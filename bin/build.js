@@ -21,6 +21,7 @@ const db = new sqlite3.Database('./data/latest.db')
 const exportToCsv = require('../lib/export-to-csv')
 const sortAddresses = require('../lib/sort-addresses')
 const getPostalKanaOrRomeItems = require('../lib/get-postal-kana-or-rome-items')
+const importPatches = require('../lib/import-patches')
 
 const sleep = promisify(setTimeout)
 
@@ -313,8 +314,8 @@ const _downloadNlftpMlitFile = (prefCode, outPath, version) => new Promise((reso
 })
 
 // 位置参照情報(大字・町丁目レベル)から住所データを取得する
-const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems) => {
-  const records = {}
+const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRomeItems, patchData) => {
+  const records = patchData[prefCode] || {}
 
   const outPath = path.join(dataDir, `nlftp_mlit_130b_${prefCode}.csv`)
 
@@ -391,7 +392,7 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
         : '',
       '',
       Number(line['緯度']),
-      Number(line['経度'])
+      Number(line['経度']),
     ]
 
     records[recordKey] = record
@@ -406,6 +407,7 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
 // 経度・緯度
 let coords = {}
 const addToCoords = (recordKey, lng, lat) => {
+  // eslint-disable-next-line no-undefined
   if (coords[recordKey] === undefined) {
     coords[recordKey] = [[lng, lat]]
   } else {
@@ -413,10 +415,10 @@ const addToCoords = (recordKey, lng, lat) => {
   }
 }
 
-const getCenter = (recordKey) => {
+const getCenter = recordKey => {
   const arr = coords[recordKey]
   const features = featureCollection(
-    arr.map(c => point(c))
+    arr.map(c => point(c)),
   )
 
   // 各地点を囲む最小の長方形（bounding box）を作り、その中心に一番近い地点を返す。
@@ -465,13 +467,11 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
     const lat = Number(line['緯度'])
     addToCoords(recordKey, lng, lat)
 
-    if(line['住居表示フラグ'] === '1') {
+    if (line['住居表示フラグ'] === '1') {
       const gaikuNum = line['街区符号・地番']
-      gaikuRecords.push([line['都道府県名'], cityName,line['大字・丁目名'], gaikuNum, lng, lat])
+      gaikuRecords.push([line['都道府県名'], cityName, line['大字・丁目名'], gaikuNum, lng, lat])
     }
   }
-
-  let count = 0
 
   const dataLength = data.length
   for (let index = 0; index < dataLength; index++) {
@@ -533,11 +533,10 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
         : '',
       koazaName,
       Number(center.geometry.coordinates[1]),
-      Number(center.geometry.coordinates[0])
+      Number(center.geometry.coordinates[0]),
     ]
 
     records[recordKey] = record
-    count++
   } // line iteration
   bar.stop()
 
@@ -550,6 +549,7 @@ const getAddressItems = async (
   prefCode,
   postalCodeKanaItems,
   postalCodeRomeItems,
+  patchData,
 ) => {
   const prefName = prefNames[parseInt(prefCode, 10) - 1]
   const filteredPostalCodeKanaItems = postalCodeKanaItems.filter(
@@ -563,13 +563,14 @@ const getAddressItems = async (
     prefCode,
     filteredPostalCodeKanaItems,
     filteredPostalCodeRomeItems,
+    patchData,
   )
 
   const { towns, gaikuItems } = await getGaikuAddressItems(
     prefCode,
     filteredPostalCodeKanaItems,
     filteredPostalCodeRomeItems,
-    oazaData
+    oazaData,
   )
 
   console.log(`${prefCode}: 大字・町丁目レベル ${Object.values(towns).length}件`)
@@ -577,6 +578,7 @@ const getAddressItems = async (
 
   return { towns, gaikuItems }
 }
+
 
 const main = async () => {
   db.serialize(() => {
@@ -637,6 +639,8 @@ const main = async () => {
     '"経度"',
   ].join(',') + '\n')
 
+  const patchData = await importPatches()
+
   for (let i = 0; i < prefCodeArray.length; i++) {
     const prefCode = toPrefCode(prefCodeArray[i])
 
@@ -645,6 +649,7 @@ const main = async () => {
       prefCode,
       postalCodeKanaItems,
       postalCodeRomeItems,
+      patchData,
     )
     const tp1 = performance.now()
     console.log(`${prefCode}: build took ` + (tp1 - tp0) + ' milliseconds.')
