@@ -4,9 +4,9 @@
 
 本データは、国土交通省位置参照情報ダウンロードサービスで配布されている「大字・町丁目レベル位置参照情報」をベースとしていますが、「大字・町丁目レベル位置参照情報」データは年に一回更新であるのに対して、本リポジトリで配布するデータは毎月更新しています。
 
-[latest.csvをダウンロード](https://raw.githubusercontent.com/geolonia/japanese-addresses/master/data/latest.csv)
+[latest.csvをダウンロード](https://geolonia.github.io/japanese-addresses/latest.csv)
 
-[latest.dbをダウンロード](https://raw.githubusercontent.com/geolonia/japanese-addresses/master/data/latest.db)
+[latest.dbをダウンロード](https://geolonia.github.io/japanese-addresses/latest.db)
 
 [リリースノート](https://github.com/geolonia/japanese-addresses/releases)
 

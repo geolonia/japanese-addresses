@@ -26,3 +26,19 @@ jobs:
       - name: S3 sync
         working-directory: api
         run: aws s3 sync . s3://${{ secrets.AWS_BUCKET_NAME }}/${{ steps.get_version.outputs.VERSION }} --cache-control "public, max-age=604800, immutable"
+      - name: Deploy generated files
+        run: |
+          git checkout --orphan gh-pages
+          mkdir docs
+          mv _config.yml docs/
+          mv README.md docs/
+          mv data/latest.db docs/
+          mv data/latest.csv docs/
+          mv api docs/
+          mv images docs/
+          git rm -rf . > /dev/null 2>&1
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git add docs > /dev/null 2>&1
+          git commit -m "Deploy" > /dev/null 2>&1
+          git push --force origin gh-pages
