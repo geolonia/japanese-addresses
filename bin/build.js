@@ -22,6 +22,7 @@ const exportToCsv = require('../lib/export-to-csv')
 const sortAddresses = require('../lib/sort-addresses')
 const getPostalKanaOrRomeItems = require('../lib/get-postal-kana-or-rome-items')
 const importPatches = require('../lib/import-patches')
+const createRecordKey = require('../lib/create-record-key')
 
 const sleep = promisify(setTimeout)
 
@@ -356,10 +357,7 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
       line['都道府県名'], cityName, townName, postalCodeRomeItems, '市区町村名ローマ字', 'rome',
     )
 
-    // 重複チェックに使用するためのキーには、「大字」または「字」を含めない。
-    const oazaKey = townName.replace(/^大?字/g, '')
-
-    const recordKey = line['都道府県名'] + cityName + oazaKey
+    const recordKey = createRecordKey(line['都道府県名'], cityName, townName)
 
     // to avoid duplication
     if (records[recordKey]) {
@@ -459,10 +457,8 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
 
     // 重複チェックに使用するためのキーには、「大字」または「字」を含めない。
     const townName = removeUnnecessarySpace(line['大字・丁目名'])
-    const oazaKey = townName.replace(/^大?字/g, '')
-
     const koazaName = line['小字・通称名'] === 'NULL' ? '' : line['小字・通称名']
-    const recordKey = line['都道府県名'] + cityName + oazaKey + koazaName
+    const recordKey = createRecordKey(line['都道府県名'], cityName, townName, koazaName)
     const lng = Number(line['経度'])
     const lat = Number(line['緯度'])
     addToCoords(recordKey, lng, lat)
@@ -485,14 +481,9 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
           (pref === line['都道府県名'] &&
             orig === line['市区町村名']))
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
-
     const townName = removeUnnecessarySpace(line['大字・丁目名'])
-
-    // 重複チェックに使用するためのキーには、「大字」または「字」を含めない。
-    const oazaKey = townName.replace(/^大?字/g, '')
-
     const koazaName = line['小字・通称名'] === 'NULL' ? '' : line['小字・通称名']
-    const recordKey = line['都道府県名'] + cityName + oazaKey + koazaName
+    const recordKey = createRecordKey(line['都道府県名'], cityName, townName, koazaName)
 
     // to avoid duplication
     if (records[recordKey]) {
