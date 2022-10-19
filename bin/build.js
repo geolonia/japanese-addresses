@@ -17,7 +17,6 @@ const turfCenter = require('@turf/center').default
 const turfNearestPoint = require('@turf/nearest-point').default
 const { featureCollection, point } = require('@turf/helpers')
 const sqlite3 = require('sqlite3')
-const db = new sqlite3.Database('./data/latest.db')
 const exportToCsv = require('../lib/export-to-csv')
 const sortAddresses = require('../lib/sort-addresses')
 const getPostalKanaOrRomeItems = require('../lib/get-postal-kana-or-rome-items')
@@ -27,6 +26,12 @@ const createRecordKey = require('../lib/create-record-key')
 const sleep = promisify(setTimeout)
 
 const dataDir = path.join(path.dirname(path.dirname(__filename)), 'data')
+
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir)
+}
+
+const db = new sqlite3.Database(path.join(dataDir, 'latest.db'))
 
 const isjRenames = [
   { pref: '兵庫県', orig: '篠山市', renamed: '丹波篠山市' },
