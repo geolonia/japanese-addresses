@@ -28,9 +28,10 @@ const sleep = promisify(setTimeout)
 const dataDir = path.join(path.dirname(path.dirname(__filename)), 'data')
 
 if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir);
+  fs.mkdirSync(dataDir)
 }
-const db = new sqlite3.Database('./data/latest.db')
+
+const db = new sqlite3.Database(path.join(dataDir, 'latest.db'))
 
 const isjRenames = [
   { pref: '兵庫県', orig: '篠山市', renamed: '丹波篠山市' },
