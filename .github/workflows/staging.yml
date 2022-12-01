@@ -10,7 +10,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: mkdir data || true
       - run: npm install
       - name: Build Nagano data only
@@ -21,7 +21,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: mkdir data || true
       - run: npm install
       - run: NODE_OPTIONS="--max-old-space-size=4096" node bin/build.js
