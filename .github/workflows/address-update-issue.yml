@@ -1,4 +1,4 @@
-name: Weekly Team Sync
+name: Create address update issue
 on:
   schedule:
     - cron: 40,45,50 * * * *
@@ -10,6 +10,11 @@ jobs:
     permissions:
       issues: write
     steps:
+      - name: Set last month as env variable
+        env:
+          TZ: 'Asia/Tokyo'
+        run: echo "LAST_MONTH=$(date -d "$(date '+%Y%m01') 1 month ago" "+%Y年%m月")" >> $GITHUB_ENV
+
       - name: Create address update issue
         uses: imjohnbo/issue-bot@3daae12aa54d38685d7ff8459fc8a2aee8cea98b
         with:
