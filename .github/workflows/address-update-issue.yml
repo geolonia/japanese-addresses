@@ -1,0 +1,41 @@
+name: Weekly Team Sync
+on:
+  schedule:
+    - cron: 40,45,50 * * * *
+
+jobs:
+  create_issue:
+    name: Create address update issue
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Create address update issue
+        uses: imjohnbo/issue-bot@3daae12aa54d38685d7ff8459fc8a2aee8cea98b
+        with:
+          assignees: "champierre"
+          labels: "住所データ変更"
+          title: "国土地理協会 地名変更情報の住所を追加"
+          body: |
+            # リクエストの種類(必須)
+
+            - [x] 追加
+            - [ ] 修正
+            - [ ] 削除
+
+            # 対象となる住所(必須)
+
+            ```
+            ```
+
+            # 参考情報・URL(オプション)
+
+            - https://kokudo.or.jp/place/
+
+            # 備考(オプション)
+
+            特になし
+          pinned: false
+          close-previous: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
