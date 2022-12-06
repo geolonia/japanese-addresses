@@ -1,7 +1,7 @@
 name: Create address update issue
 on:
   schedule:
-    - cron: 20,25,30 * * * *
+    - cron: 0 0 1 * *
 
 jobs:
   create_issue:
