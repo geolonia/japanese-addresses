@@ -1,7 +1,7 @@
 name: Create address update issue
 on:
   schedule:
-    - cron: 40,45,50 * * * *
+    - cron: 20,25,30 * * * *
 
 jobs:
   create_issue:
@@ -20,7 +20,7 @@ jobs:
         with:
           assignees: "champierre"
           labels: "住所データ変更"
-          title: "国土地理協会 地名変更情報の住所を追加"
+          title: "国土地理協会 ${{ env.LAST_MONTH }}更新 地名変更情報の住所を追加"
           body: |
             # リクエストの種類(必須)
 
