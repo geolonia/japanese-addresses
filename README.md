@@ -147,7 +147,7 @@ $ npm run build:api # latest.csv から API を作成します
 
 # オプション
 $ node bin/build-gaiku-api.mjs # 街区レベルの API を追加で作成します
-$ node bin/download-residential.sh # ベースレジストリのデータのダウンロードを行います
+$ sh bin/download-residential.sh # ベースレジストリのデータのダウンロードを行います
 $ node bin/build-jyukyo-api.mjs # 住居符号レベルの API を追加で作成します
 ```
 
