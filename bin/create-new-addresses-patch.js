@@ -30,7 +30,7 @@ const formatDate = date => {
   const year = date.getFullYear()
   const month = ('00' + (date.getMonth() + 1)).slice(-2)
   const day = ('00' + date.getDate()).slice(-2)
-  return `${year}/${month}/${day}`
+  return `${year}${month}${day}`
 }
 
 const constructAddresses = (address, matchedData) => {
@@ -139,7 +139,12 @@ const main = async () => {
       patches = patches.concat(constructAddresses(address, matchedData))
     }
   }
-  console.log(JSON.stringify(patches, null, 2))
+
+  try {
+    fs.writeFileSync(`patches/${formatDate(new Date())}.json`, JSON.stringify(patches, null, 2))
+  } catch (e) {
+    console.log(e)
+  }
 }
 
 main()

@@ -1,0 +1,20 @@
+name: Create address update PR
+on:
+  schedule:
+    - cron: 0 0 2 * *
+  push:
+    branches:
+      - address-update-pr
+jobs:
+  create_pr:
+    name: Create address update PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout the repo
+        uses: actions/checkout@v3
+      - run: npm install
+      - name: create new addresses patch
+        run: node bin/create-new-addresses-patch.js
+      - name: build address.csv
+        run: node bin/build.js
+      - uses: peter-evans/create-pull-request@v4
