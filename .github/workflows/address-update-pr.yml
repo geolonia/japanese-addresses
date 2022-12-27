@@ -16,5 +16,8 @@ jobs:
       - name: create new addresses patch
         run: node bin/create-new-addresses-patch.js
       - name: build address.csv
-        run: node bin/build.js
-      - uses: peter-evans/create-pull-request@v4
+        run: NODE_OPTIONS="--max-old-space-size=4096" node bin/build.js
+      - name: build API
+        run: node bin/build-api.js
+      - name: create PR
+        uses: peter-evans/create-pull-request@v4
