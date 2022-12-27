@@ -2,11 +2,9 @@ name: Create address update PR
 on:
   schedule:
     - cron: 0 0 2 * *
-  push:
-    branches:
-      - address-update-pr
+
 jobs:
-  create_pr:
+  create_address_update_pr:
     name: Create address update PR
     runs-on: ubuntu-latest
     steps:
@@ -19,5 +17,14 @@ jobs:
         run: NODE_OPTIONS="--max-old-space-size=4096" node bin/build.js
       - name: build API
         run: node bin/build-api.js
+      - name: Set last month as env variable
+        env:
+          TZ: 'Asia/Tokyo'
+        run: echo "LAST_MONTH=$(date -d "$(date '+%Y%m01') 1 month ago" "+%Y年%m月")" >> $GITHUB_ENV
       - name: create PR
         uses: peter-evans/create-pull-request@v4
+        with:
+          title: "国土地理協会 ${{ env.LAST_MONTH }}更新 地名変更情報の住所を追加"
+          body: |
+            [国土地理協会 ${{ env.LAST_MONTH }}更新 地名変更情報](https://kokudo.or.jp/place/)の住所を追加
+            GitHub Actions(Create address update PR)によって自動作成
