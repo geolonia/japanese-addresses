@@ -12,6 +12,7 @@ jobs:
     steps:
       - name: checkout the repo
         uses: actions/checkout@v3
+      - run: npm install
       - name: create new addresses patch
         run: node bin/create-new-addresses-patch.js
       - name: build address.csv
