@@ -1,0 +1,17 @@
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+  categories:
+    - title: 住所データ変更 🏡 
+      labels:
+        - 住所データ変更
+    - title: 新機能 🎉
+      labels:
+        - enhancement
+    - title: バグ修正 🛠
+      labels:
+        - bug-fix
+    - title: その他の変更
+      labels:
+        - '*'
