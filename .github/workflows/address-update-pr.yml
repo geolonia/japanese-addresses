@@ -29,3 +29,4 @@ jobs:
             [国土地理協会 ${{ env.LAST_MONTH }}更新 地名変更情報](https://kokudo.or.jp/place/)の住所を追加
             GitHub Actions(Create address update PR)によって自動作成
           labels: 住所データ変更
+          reviewers: champierre
