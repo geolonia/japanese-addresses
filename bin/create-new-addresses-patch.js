@@ -36,8 +36,8 @@ const formatDate = date => {
 const constructAddresses = (address, matchedData) => {
   let patches = []
 
-  const oazaChochomokuKana = address.match(/（(.+)）/)[1]
-  address = address.replace(/（.+）/, '')
+  const oazaChochomokuKana = address.match(/[(（](.+)[）)]/)[1]
+  address = address.replace(/[(（].+[）)]/, '')
 
   const oazaChochomoku = address.replace(`${matchedData[1]}${matchedData[5]}`, '')
 
