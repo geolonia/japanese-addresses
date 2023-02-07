@@ -11,7 +11,5 @@ jobs:
       - uses: actions/checkout@v3
       - run: mkdir data || true
       - run: npm install
-      - name: Build Nagano, Hokkaido, Nara, Yamanashi and Tokyo data
-        run: node bin/build.js 20,1,29,19,13
       - name: Test
-        run: npx mocha
+        run: npm test

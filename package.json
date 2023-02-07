@@ -5,7 +5,8 @@
   "main": "./bin/build.js",
   "scripts": {
     "build": "node bin/build.js",
-    "build:api": "node bin/build-api.js"
+    "build:api": "node bin/build-api.js",
+    "test": "node bin/build.js 20,1,29,19,13 && npx mocha"
   },
   "author": "",
   "license": "MIT",
