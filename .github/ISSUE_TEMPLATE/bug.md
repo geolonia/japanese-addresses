@@ -3,7 +3,7 @@ name: バグ報告
 about: japanese-addresses のバグを報告するときにこのテンプレートをお使いください。
 title: バグ報告
 labels: バグ報告
-assignees: champierre
+assignees: kamataryo
 
 ---
 
