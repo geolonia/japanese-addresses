@@ -209,7 +209,7 @@ const removeStringEnclosedInParentheses = text => {
   return text.replace(REMOVE_STRING_IN_PARENS_REGEX, '')
 }
 
-const _downloadZippedFile = (url, path) => new Promise( resolve => {
+const _downloadZippedFile = (url, path) => new Promise(resolve => {
   https.get(url, res => {
     res
       .pipe(unzip.Parse())
@@ -263,7 +263,7 @@ const downloadPostalCodeKana = async () => {
 module.exports.downloadPostalCodeKana = downloadPostalCodeKana
 
 const downloadPostalCodeRome = async () => {
-  const url = 'https://www.post.japanpost.jp/zipcode/dl/roman/ken_all_rome.zip'
+  const url = 'https://www.post.japanpost.jp/zipcode/dl/roman/KEN_ALL_ROME.zip'
   const csvPath = `${dataDir}/postalcode_roman.csv`
   if (!fs.existsSync(csvPath)) {
     await _downloadZippedFile(url, csvPath)
@@ -349,8 +349,8 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
     const renameEntry =
       isjRenames.find(
         ({ pref, orig }) =>
-          (pref === line['都道府県名'] &&
-            orig === line['市区町村名']))
+        (pref === line['都道府県名'] &&
+          orig === line['市区町村名']))
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
 
     const townName = removeUnnecessarySpace(line['大字町丁目名'])
@@ -396,6 +396,7 @@ const getOazaAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRome
       '',
       Number(line['緯度']),
       Number(line['経度']),
+      Number(postalCodeKanaItem['郵便番号']),
     ]
 
     records[recordKey] = record
@@ -456,8 +457,8 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
     const renameEntry =
       isjRenames.find(
         ({ pref, orig }) =>
-          (pref === line['都道府県名'] &&
-            orig === line['市区町村名']))
+        (pref === line['都道府県名'] &&
+          orig === line['市区町村名']))
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
 
     // 重複チェックに使用するためのキーには、「大字」または「字」を含めない。
@@ -483,8 +484,8 @@ const getGaikuAddressItems = async (prefCode, postalCodeKanaItems, postalCodeRom
     const renameEntry =
       isjRenames.find(
         ({ pref, orig }) =>
-          (pref === line['都道府県名'] &&
-            orig === line['市区町村名']))
+        (pref === line['都道府県名'] &&
+          orig === line['市区町村名']))
     const cityName = renameEntry ? renameEntry.renamed : line['市区町村名']
     const townName = removeUnnecessarySpace(line['大字・丁目名'])
     const koazaName = line['小字・通称名'] === 'NULL' ? '' : line['小字・通称名']
@@ -579,7 +580,7 @@ const getAddressItems = async (
 const main = async () => {
   db.serialize(() => {
     db.run('drop table if exists addresses')
-    db.run('create table addresses(都道府県コード text, 都道府県名 text, 都道府県名カナ text, 都道府県名ローマ字 text, 市区町村コード text, 市区町村名 text, 市区町村名カナ text, 市区町村名ローマ字 text, 大字町丁目名 text, 大字町丁目名カナ text, 大字町丁目名ローマ字 text, 小字・通称名 text, 緯度 real, 経度 real)')
+    db.run('create table addresses(都道府県コード text, 都道府県名 text, 都道府県名カナ text, 都道府県名ローマ字 text, 市区町村コード text, 市区町村名 text, 市区町村名カナ text, 市区町村名ローマ字 text, 大字町丁目名 text, 大字町丁目名カナ text, 大字町丁目名ローマ字 text, 小字・通称名 text, 緯度 real, 経度 real, 郵便番号 text)')
   })
 
   const t0 = performance.now()
@@ -620,7 +621,7 @@ const main = async () => {
   const gaiku_outfile = await fs.promises.open(path.join(dataDir, 'latest_gaiku.csv'), 'w')
 
   const sqliteWriterQueue = async.queue(async array => {
-    db.run('insert into addresses(都道府県コード, 都道府県名, 都道府県名カナ, 都道府県名ローマ字, 市区町村コード, 市区町村名, 市区町村名カナ, 市区町村名ローマ字, 大字町丁目名, 大字町丁目名カナ, 大字町丁目名ローマ字, 小字・通称名, 緯度, 経度) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', ...array)
+    db.run('insert into addresses(都道府県コード, 都道府県名, 都道府県名カナ, 都道府県名ローマ字, 市区町村コード, 市区町村名, 市区町村名カナ, 市区町村名ローマ字, 大字町丁目名, 大字町丁目名カナ, 大字町丁目名ローマ字, 小字・通称名, 緯度, 経度, 郵便番号) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', ...array)
   }, 1)
   const gaiku_outfileWriterQueue = async.queue(async str => {
     await gaiku_outfile.write(str)
