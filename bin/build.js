@@ -274,16 +274,18 @@ const downloadPostalCodeRome = async () => {
     to: 'UNICODE',
     type: 'string',
   })
+  const column_names = [
+    '郵便番号',
+    '都道府県名',
+    '市区町村名',
+    '町域名',
+    '都道府県名ローマ字',
+    '市区町村名ローマ字',
+    '町域名ローマ字',
+  ]
   const json = csvParse(text, {
-    columns: [
-      '郵便番号',
-      '都道府県名',
-      '市区町村名',
-      '町域名',
-      '都道府県名ローマ字',
-      '市区町村名ローマ字',
-      '町域名ローマ字',
-    ],
+    from_line: 1,
+    columns: header => header.map((column, index) => column_names[index]),
   }).map(item => ({
     ...item,
     市区町村名: removeUnnecessarySpace(item['市区町村名']),
