@@ -11,5 +11,6 @@ jobs:
       - uses: actions/checkout@v3
       - run: mkdir data || true
       - run: npm install
+      - run: node -v
       - name: Test
         run: npm test
