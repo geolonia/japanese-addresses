@@ -263,7 +263,7 @@ const downloadPostalCodeKana = async () => {
 module.exports.downloadPostalCodeKana = downloadPostalCodeKana
 
 const downloadPostalCodeRome = async () => {
-  const url = 'https://www.post.japanpost.jp/zipcode/dl/roman/ken_all_rome.zip'
+  const url = 'https://www.post.japanpost.jp/zipcode/dl/roman/KEN_ALL_ROME.zip'
   const csvPath = `${dataDir}/postalcode_roman.csv`
   if (!fs.existsSync(csvPath)) {
     await _downloadZippedFile(url, csvPath)
