@@ -11,26 +11,26 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "chai": "^4.3.4",
-    "eslint": "^5.3.0",
-    "mocha": "^8.3.2",
-    "unzipper": "^0.10.11"
+    "chai": "^4.3.10",
+    "eslint": "^8.52.0",
+    "mocha": "^10.2.0",
+    "unzipper": "^0.10.14"
   },
   "dependencies": {
-    "@geolonia/japanese-numeral": "^0.1.14",
-    "@geolonia/normalize-japanese-addresses": "^2.5.7",
-    "@turf/center": "^6.3.0",
-    "@turf/nearest-point": "^6.3.0",
-    "async": "^3.2.2",
-    "cheerio-httpcli": "^0.8.2",
-    "cli-progress": "^3.8.2",
-    "csv-parse": "^4.15.3",
-    "encoding-japanese": "^1.0.30",
-    "iconv-lite": "^0.6.2",
+    "@geolonia/japanese-numeral": "^1.0.2",
+    "@geolonia/normalize-japanese-addresses": "^2.10.0",
+    "@turf/center": "^6.5.0",
+    "@turf/nearest-point": "^6.5.0",
+    "async": "^3.2.4",
+    "cheerio-httpcli": "^0.8.3",
+    "cli-progress": "^3.12.0",
+    "csv-parse": "^5.5.2",
+    "encoding-japanese": "^2.0.0",
+    "iconv-lite": "^0.6.3",
     "js-hira-kata-romanize": "^1.0.5",
-    "mkdirp": "^1.0.4",
+    "mkdirp": "^3.0.1",
     "readline": "^1.3.0",
-    "sqlite3": "^5.1.5"
+    "sqlite3": "^5.1.6"
   },
   "mocha": {
     "spec": "test/*.js"
