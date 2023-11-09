@@ -65,3 +65,23 @@ describe('latest.csvのテスト', () => {
     expect(data).to.equal('"19","山梨県","ヤマナシケン","YAMANASHI KEN","19346","西八代郡市川三郷町","ニシヤツシログンイチカワミサトチョウ","NISHIYATSUSHIRO GUN ICHIKAWAMISATO CHO","葛篭沢",,,,35.496541,138.472115')
   })
 })
+
+describe('JSON API のテスト', () => {
+  // https://github.com/geolonia/japanese-addresses/issues/171
+  describe('熊本県球磨郡湯前町関連', () => {
+    it('ja.json に存在する', async () => {
+      const jajson_path = path.join(path.dirname(__filename), '../api/ja.json')
+      const ja = JSON.parse(await fs.promises.readFile(jajson_path, 'utf-8'))
+      expect(ja.熊本県.indexOf("球磨郡湯前町")).not.to.equal(-1)
+    })
+
+    it('ja/熊本県/球磨郡湯前町.json が存在する', async () => {
+      const cityjson_path = path.join(path.dirname(__filename), '../api/ja/熊本県/球磨郡湯前町.json')
+      const towns = JSON.parse(await fs.promises.readFile(cityjson_path), 'utf-8')
+      const 上里 = towns.find(town => town.town === '上里')
+      expect(上里).not.to.equal(undefined)
+      expect(typeof 上里.lat).to.equal('number')
+      expect(typeof 上里.lng).to.equal('number')
+    })
+  })
+})
