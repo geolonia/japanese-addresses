@@ -3,8 +3,6 @@ name: 機能追加リクエスト
 about: japanese-addresses の機能追加をリクエストするときにこのテンプレートをお使いください。
 title: 機能追加リクエスト
 labels: 機能追加リクエスト
-assignees: keichan34
-
 ---
 
 # 追加したい機能の内容
